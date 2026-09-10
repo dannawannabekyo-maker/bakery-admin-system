@@ -1,7 +1,8 @@
-# Bakery Order & Administration System
+# Allins Bakery
 
 Next.js 15 (App Router) + Supabase. A customer storefront (shop, cart, checkout)
-plus role-based **admin**, **sales**, and **production** dashboards.
+plus role-based **admin**, **sales**, and **production** dashboards. Prices in
+Indonesian rupiah (IDR).
 
 ## Setup
 

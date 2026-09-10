@@ -23,7 +23,7 @@ export function DashboardShell({
       <aside className="border-b border-border bg-muted/40 p-4 md:border-b-0 md:border-r">
         <div className="mb-6 flex items-center justify-between md:block">
           <Link href="/" className="text-lg font-bold">
-            🥐 Bakery Admin
+            🧁 Allins Bakery
           </Link>
           <p className="mt-1 hidden text-xs uppercase tracking-widest text-primary md:block">
             {title}

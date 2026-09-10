@@ -1,16 +1,16 @@
 @import "tailwindcss";
 
 /* ---------------------------------------------------------------------------
-   Bakery Admin System — design tokens
+   Allins Bakery — pastel design tokens
    --------------------------------------------------------------------------- */
 :root {
-  --background: #fdfaf6;
-  --foreground: #2b211a;
-  --muted: #f3ece1;
-  --border: #e6dccb;
-  --primary: #b45309;   /* warm caramel */
-  --primary-foreground: #fff8f0;
-  --accent: #7c2d12;
+  --background: #fff7fb;         /* rose-tinted cream */
+  --foreground: #4a3b47;         /* soft dark plum */
+  --muted: #fbeef4;             /* pale pink */
+  --border: #f1dbe7;            /* light rose */
+  --primary: #a8547f;          /* dusty rose (AA on near-white text) */
+  --primary-foreground: #fff7fb;
+  --accent: #8f7bc4;           /* soft lavender */
 }
 
 @theme inline {
@@ -27,13 +27,13 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #1c1613;
-    --foreground: #f3ece1;
-    --muted: #2a211c;
-    --border: #3b302a;
-    --primary: #f59e0b;
-    --primary-foreground: #1c1613;
-    --accent: #fdba74;
+    --background: #221a20;
+    --foreground: #f4e8ef;
+    --muted: #2e222b;
+    --border: #3f2f3a;
+    --primary: #e6a8c8;         /* light rose */
+    --primary-foreground: #221a20;
+    --accent: #c9b6e4;
   }
 }
 

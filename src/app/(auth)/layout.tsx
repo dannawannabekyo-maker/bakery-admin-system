@@ -9,7 +9,7 @@ export default function AuthLayout({
     <div className="grid min-h-screen lg:grid-cols-2">
       <div className="hidden flex-col justify-between bg-primary p-10 text-primary-foreground lg:flex">
         <Link href="/" className="text-lg font-bold">
-          🥐 Bakery Admin
+          🧁 Allins Bakery
         </Link>
         <div className="space-y-3">
           <h2 className="text-3xl font-bold leading-tight">
@@ -21,7 +21,7 @@ export default function AuthLayout({
           </p>
         </div>
         <p className="text-sm text-primary-foreground/70">
-          © {new Date().getFullYear()} Bakery Admin System
+          © {new Date().getFullYear()} Allins Bakery
         </p>
       </div>
       <div className="flex items-center justify-center p-6">

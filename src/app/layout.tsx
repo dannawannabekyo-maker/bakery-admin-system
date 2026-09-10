@@ -3,11 +3,11 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: {
-    default: "Bakery Order & Administration System",
-    template: "%s · Bakery Admin",
+    default: "Allins Bakery",
+    template: "%s · Allins Bakery",
   },
   description:
-    "Order management, kitchen production board, and owner God-Mode admin for a bakery.",
+    "Allins Bakery — online shop, order management, kitchen production board, and owner admin.",
 };
 
 export default function RootLayout({

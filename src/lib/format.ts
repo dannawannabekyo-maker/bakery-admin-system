@@ -1,6 +1,6 @@
-/** Prices are stored as whole-currency integers. Adjust locale/currency here. */
-const CURRENCY = "USD";
-const LOCALE = "en-US";
+/** Prices are stored as whole-rupiah integers (IDR has no minor unit). */
+const CURRENCY = "IDR";
+const LOCALE = "id-ID";
 
 export function formatCurrency(amount: number): string {
   return new Intl.NumberFormat(LOCALE, {

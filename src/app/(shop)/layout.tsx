@@ -21,7 +21,7 @@ export default async function ShopLayout({
         <header className="sticky top-0 z-10 border-b border-border bg-background/80 backdrop-blur">
           <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
             <Link href="/shop" className="text-lg font-bold">
-              🥐 The Bakery
+              🧁 Allins Bakery
             </Link>
             <nav className="flex items-center gap-1 text-sm">
               <Link
@@ -76,8 +76,7 @@ export default async function ShopLayout({
         </main>
 
         <footer className="border-t border-border py-6 text-center text-sm text-foreground/50">
-          © {new Date().getFullYear()} The Bakery · Order &amp; Administration
-          System
+          © {new Date().getFullYear()} Allins Bakery
         </footer>
       </div>
     </CartProvider>
