@@ -8,6 +8,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { createOrder } from "@/lib/orders-server";
 import { fail, ok, slugify, type ActionResult } from "@/lib/action-result";
 import { ORDER_STATUSES, ROLES, STORAGE_BUCKETS } from "@/lib/constants";
+import { resolveImageUrl } from "@/lib/images";
 
 function revalidateAdmin() {
   revalidatePath("/admin", "layout");
@@ -43,12 +44,9 @@ export async function saveProduct(
     imageUrl = admin.storage
       .from(STORAGE_BUCKETS.productImages)
       .getPublicUrl(path).data.publicUrl;
-  } else if (imageUrl && !/^(https?:)?\/\//i.test(imageUrl) && !imageUrl.startsWith("/")) {
-    // A bare bucket path like "products/x.jpg" → store the full public URL.
-    imageUrl = admin.storage
-      .from(STORAGE_BUCKETS.productImages)
-      .getPublicUrl(imageUrl.replace(new RegExp(`^${STORAGE_BUCKETS.productImages}/`), ""))
-      .data.publicUrl;
+  } else if (imageUrl) {
+    // Normalise a Google Drive link / bare bucket path to a usable URL.
+    imageUrl = resolveImageUrl(imageUrl) || null;
   }
 
   const payload = {
