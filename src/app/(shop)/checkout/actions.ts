@@ -2,11 +2,11 @@
 
 import { revalidatePath } from "next/cache";
 
-import { assertRole, getSession } from "@/lib/auth";
+import { assertRole } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin";
 import { createOrder } from "@/lib/orders-server";
 import { fail, ok, type ActionResult } from "@/lib/action-result";
+import { PAYMENT_METHODS, STORAGE_BUCKETS } from "@/lib/constants";
 
 export async function createCustomerOrder(
   _prev: ActionResult | null,
@@ -37,60 +37,72 @@ export async function createCustomerOrder(
 }
 
 /**
- * Simulated payment gateway. On "success" the order is flipped to PAID by the
- * system (service role) — which fires the stock-deduction trigger. On "fail"
- * nothing changes.
+ * Customer records an out-of-band payment: uploads a screenshot/photo of the
+ * QRIS or bank-transfer proof. The order stays UNPAID with `payment_submitted_at`
+ * set — Sales/Admin verify the proof and flip it to PAID.
  */
-export async function simulatePayment(
+export async function submitPaymentProof(
   _prev: ActionResult | null,
   formData: FormData,
 ): Promise<ActionResult> {
-  const session = await getSession();
-  if (!session) return fail("Please sign in again.");
+  const { userId, profile } = await assertRole(["CUSTOMER", "ADMIN"]);
 
   const orderId = String(formData.get("order_id") ?? "");
-  const outcome = String(formData.get("outcome") ?? "success");
-  const method = String(formData.get("method") ?? "SIMULATED_GATEWAY");
+  const method = String(formData.get("method") ?? "");
+  const proof = formData.get("proof") as File | null;
+
+  if (!orderId) return fail("Order tidak ditemukan.");
+  if (!PAYMENT_METHODS.includes(method as never)) {
+    return fail("Pilih metode pembayaran.");
+  }
+  if (!proof || proof.size === 0) {
+    return fail("Unggah bukti pembayaran dulu.");
+  }
+  if (!proof.type.startsWith("image/")) {
+    return fail("Bukti pembayaran harus berupa gambar.");
+  }
+  if (proof.size > 5 * 1024 * 1024) {
+    return fail("Ukuran gambar maksimal 5 MB.");
+  }
 
   const supabase = await createClient();
   const { data: order } = await supabase
     .from("orders")
-    .select("id, order_number, status, total_amount, customer_id")
+    .select("id, status, customer_id")
     .eq("id", orderId)
     .maybeSingle();
 
-  if (!order) return fail("Order not found.");
-  if (order.customer_id !== session.userId && session.profile.role !== "ADMIN") {
-    return fail("This is not your order.");
+  if (!order) return fail("Order tidak ditemukan.");
+  if (order.customer_id !== userId && profile.role !== "ADMIN") {
+    return fail("Ini bukan order Anda.");
   }
   if (order.status !== "UNPAID") {
-    return fail(`This order is already ${order.status.toLowerCase()}.`);
+    return fail("Order ini sudah tidak menunggu pembayaran.");
   }
 
-  if (outcome === "fail") {
-    return fail(
-      "Payment was declined by the gateway (simulated). You have not been charged — try again.",
-    );
-  }
+  const ext = proof.name.split(".").pop()?.toLowerCase() || "jpg";
+  const path = `${userId}/${orderId}-${Date.now()}.${ext}`;
+  const { error: upErr } = await supabase.storage
+    .from(STORAGE_BUCKETS.paymentReceipts)
+    .upload(path, proof, { upsert: true, contentType: proof.type });
+  if (upErr) return fail(`Gagal mengunggah bukti: ${upErr.message}`);
 
-  // Simulate gateway latency.
-  await new Promise((r) => setTimeout(r, 600));
-
-  const admin = createAdminClient();
-  const { error } = await admin
+  const { error } = await supabase
     .from("orders")
     .update({
-      status: "PAID",
       payment_method: method,
-      payment_receipt_url: `SIM-${order.order_number}-${Date.now()}`,
+      payment_receipt_url: path,
+      payment_submitted_at: new Date().toISOString(),
     })
-    .eq("id", order.id);
-
+    .eq("id", orderId);
   if (error) return fail(error.message);
 
   revalidatePath("/orders");
-  revalidatePath(`/orders/${order.id}`);
-  return ok("Payment successful.", `/orders/${order.id}?paid=1`);
+  revalidatePath(`/orders/${orderId}`);
+  return ok(
+    "Bukti pembayaran terkirim. Menunggu verifikasi.",
+    `/orders/${orderId}?submitted=1`,
+  );
 }
 
 export async function cancelMyOrder(formData: FormData): Promise<ActionResult> {

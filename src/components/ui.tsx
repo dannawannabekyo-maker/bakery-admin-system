@@ -25,7 +25,7 @@ const btnVariants: Record<NonNullable<ButtonProps["variant"]>, string> = {
 
 const btnSizes: Record<NonNullable<ButtonProps["size"]>, string> = {
   sm: "h-8 px-3 text-sm",
-  md: "h-10 px-4 text-sm",
+  md: "h-11 px-4 text-sm sm:h-10",
 };
 
 export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
@@ -43,7 +43,7 @@ Button.displayName = "Button";
 /* Inputs                                                                      */
 /* -------------------------------------------------------------------------- */
 const fieldBase =
-  "w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/30 disabled:opacity-60";
+  "w-full rounded-lg border border-border bg-background px-3 py-2 text-base outline-none focus:border-primary focus:ring-2 focus:ring-primary/30 disabled:opacity-60 sm:text-sm";
 
 export const Input = React.forwardRef<
   HTMLInputElement,

@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { getOrder } from "@/lib/data";
+import { getOrder, getReceiptSignedUrl } from "@/lib/data";
 import { formatCurrency, formatDateTime } from "@/lib/format";
+import { PAYMENT_METHOD_LABEL, type PaymentMethod } from "@/lib/constants";
 import { Card, StatusBadge } from "@/components/ui";
 import { ConfirmButton } from "@/components/form";
 import { PageHeader } from "@/components/dashboard-shell";
@@ -20,6 +21,8 @@ export default async function AdminOrderDetail({
   const { id } = await params;
   const order = await getOrder(id, { admin: true });
   if (!order) notFound();
+
+  const receiptUrl = await getReceiptSignedUrl(order.payment_receipt_url);
 
   return (
     <>
@@ -41,9 +44,9 @@ export default async function AdminOrderDetail({
       </div>
 
       <div className="grid gap-4 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
+        <Card className="overflow-x-auto lg:col-span-2">
           <h2 className="mb-2 font-semibold">Items</h2>
-          <table className="w-full text-sm">
+          <table className="w-full min-w-[380px] text-sm">
             <thead className="text-left text-foreground/60">
               <tr>
                 <th className="py-1">Product</th>
@@ -94,11 +97,30 @@ export default async function AdminOrderDetail({
           </p>
           <p>
             <span className="text-foreground/60">Payment:</span>{" "}
-            {order.payment_method ?? "—"}
+            {PAYMENT_METHOD_LABEL[order.payment_method as PaymentMethod] ??
+              order.payment_method ??
+              "—"}
           </p>
+          {order.payment_submitted_at && (
+            <p>
+              <span className="text-foreground/60">Proof submitted:</span>{" "}
+              {formatDateTime(order.payment_submitted_at)}
+            </p>
+          )}
           <p>
-            <span className="text-foreground/60">Receipt ref:</span>{" "}
-            {order.payment_receipt_url ?? "—"}
+            <span className="text-foreground/60">Receipt:</span>{" "}
+            {receiptUrl ? (
+              <a
+                href={receiptUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="text-primary underline"
+              >
+                Lihat bukti pembayaran →
+              </a>
+            ) : (
+              (order.payment_receipt_url ?? "—")
+            )}
           </p>
         </Card>
       </div>

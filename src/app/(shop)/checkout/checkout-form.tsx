@@ -53,7 +53,7 @@ export function CheckoutForm({
     .slice(0, 16);
 
   return (
-    <form action={action} className="space-y-5">
+    <form action={action} className="space-y-5 pb-24 sm:pb-0">
       <input
         type="hidden"
         name="items"
@@ -128,9 +128,13 @@ export function CheckoutForm({
       <Feedback state={state} />
       {state?.ok && <Alert tone="success">Redirecting to payment…</Alert>}
 
-      <SubmitButton className="w-full" pendingText="Placing order…">
-        Place order &amp; continue to payment
-      </SubmitButton>
+      <div className="fixed inset-x-0 bottom-0 z-10 border-t border-border bg-background/95 p-4 backdrop-blur sm:static sm:border-0 sm:bg-transparent sm:p-0">
+        <div className="mx-auto max-w-2xl">
+          <SubmitButton className="w-full" pendingText="Placing order…">
+            Place order &amp; continue to payment
+          </SubmitButton>
+        </div>
+      </div>
     </form>
   );
 }

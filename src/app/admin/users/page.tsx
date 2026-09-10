@@ -36,8 +36,8 @@ export default async function AdminUsersPage() {
         <CreateUserForm />
       </Card>
 
-      <Card className="p-0">
-        <table className="w-full text-sm">
+      <Card className="overflow-x-auto p-0">
+        <table className="w-full min-w-[560px] text-sm">
           <thead className="border-b border-border text-left text-foreground/60">
             <tr>
               <th className="p-3">Name / edit</th>

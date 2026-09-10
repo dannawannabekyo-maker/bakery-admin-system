@@ -108,6 +108,7 @@ export interface Database {
           total_amount: number;
           payment_method: string | null;
           payment_receipt_url: string | null;
+          payment_submitted_at: string | null;
           admin_notes: string | null;
           created_at: string;
           updated_at: string;
@@ -123,6 +124,7 @@ export interface Database {
           total_amount?: number;
           payment_method?: string | null;
           payment_receipt_url?: string | null;
+          payment_submitted_at?: string | null;
           admin_notes?: string | null;
           created_at?: string;
           updated_at?: string;
@@ -142,6 +144,32 @@ export interface Database {
             referencedColumns: ["id"];
           },
         ];
+      };
+      store_settings: {
+        Row: {
+          id: number;
+          qris_image_url: string | null;
+          qris_merchant_name: string | null;
+          bank_name: string | null;
+          bank_account_number: string | null;
+          bank_account_holder: string | null;
+          payment_note: string | null;
+          updated_at: string;
+        };
+        Insert: {
+          id?: number;
+          qris_image_url?: string | null;
+          qris_merchant_name?: string | null;
+          bank_name?: string | null;
+          bank_account_number?: string | null;
+          bank_account_holder?: string | null;
+          payment_note?: string | null;
+          updated_at?: string;
+        };
+        Update: Partial<
+          Database["public"]["Tables"]["store_settings"]["Insert"]
+        >;
+        Relationships: [];
       };
       order_items: {
         Row: {
@@ -207,3 +235,5 @@ export type CategoryRow = Database["public"]["Tables"]["categories"]["Row"];
 export type ProductRow = Database["public"]["Tables"]["products"]["Row"];
 export type OrderRow = Database["public"]["Tables"]["orders"]["Row"];
 export type OrderItemRow = Database["public"]["Tables"]["order_items"]["Row"];
+export type StoreSettingsRow =
+  Database["public"]["Tables"]["store_settings"]["Row"];

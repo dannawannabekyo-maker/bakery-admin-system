@@ -47,8 +47,44 @@ export default async function AdminOrdersPage({
         ))}
       </div>
 
-      <Card className="p-0">
-        <table className="w-full text-sm">
+      {orders.length === 0 && (
+        <Card className="text-center text-foreground/60">
+          No orders match this filter.
+        </Card>
+      )}
+
+      {/* Mobile: cards */}
+      <div className="space-y-2 md:hidden">
+        {orders.map((o) => (
+          <Link key={o.id} href={`/admin/orders/${o.id}`} className="block">
+            <Card className="space-y-1 text-sm hover:border-primary">
+              <div className="flex items-center justify-between">
+                <span className="font-medium">{o.order_number}</span>
+                <StatusBadge status={o.status} />
+              </div>
+              <p className="text-foreground/60">
+                {o.customer?.full_name ?? "—"}
+                {o.customer?.phone_number
+                  ? ` · ${o.customer.phone_number}`
+                  : ""}
+              </p>
+              <div className="flex items-center justify-between">
+                <span className="text-foreground/60">
+                  {o.order_type === "PRE_ORDER" ? "Pre-order" : "Ready"} ·{" "}
+                  {formatDateTime(o.created_at)}
+                </span>
+                <span className="font-semibold">
+                  {formatCurrency(o.total_amount)}
+                </span>
+              </div>
+            </Card>
+          </Link>
+        ))}
+      </div>
+
+      {/* Desktop: table */}
+      <Card className="hidden overflow-x-auto p-0 md:block">
+        <table className="w-full min-w-[720px] text-sm">
           <thead className="border-b border-border text-left text-foreground/60">
             <tr>
               <th className="p-3">Order</th>
@@ -97,13 +133,6 @@ export default async function AdminOrdersPage({
                 </td>
               </tr>
             ))}
-            {orders.length === 0 && (
-              <tr>
-                <td colSpan={7} className="p-6 text-center text-foreground/60">
-                  No orders match this filter.
-                </td>
-              </tr>
-            )}
           </tbody>
         </table>
       </Card>

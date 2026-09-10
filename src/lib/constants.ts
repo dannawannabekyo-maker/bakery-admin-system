@@ -48,3 +48,12 @@ export const STORAGE_BUCKETS = {
   productImages: "product-images",
   paymentReceipts: "payment-receipts",
 } as const;
+
+/** Manual payment channels the customer can use at checkout. */
+export const PAYMENT_METHODS = ["QRIS", "BANK_TRANSFER"] as const;
+export type PaymentMethod = (typeof PAYMENT_METHODS)[number];
+
+export const PAYMENT_METHOD_LABEL: Record<PaymentMethod, string> = {
+  QRIS: "QRIS",
+  BANK_TRANSFER: "Transfer Bank",
+};

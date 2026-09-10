@@ -36,7 +36,7 @@ export default async function MyOrdersPage() {
         {orders.map((o) => (
           <Link key={o.id} href={`/orders/${o.id}`} className="block">
             <Card className="flex flex-wrap items-center justify-between gap-3 hover:border-primary">
-              <div>
+              <div className="min-w-0">
                 <p className="font-semibold">{o.order_number}</p>
                 <p className="text-sm text-foreground/60">
                   {formatDateTime(o.created_at)} · {o.items.length} item(s)
@@ -44,6 +44,16 @@ export default async function MyOrdersPage() {
                     o.pickup_or_delivery_date &&
                     ` · for ${formatDateTime(o.pickup_or_delivery_date)}`}
                 </p>
+                {o.status === "UNPAID" &&
+                  (o.payment_submitted_at ? (
+                    <p className="mt-1 text-xs font-medium text-amber-600">
+                      Menunggu verifikasi pembayaran
+                    </p>
+                  ) : (
+                    <span className="mt-1 inline-block text-xs font-medium text-primary underline">
+                      Belum bayar — lanjutkan pembayaran
+                    </span>
+                  ))}
               </div>
               <div className="flex items-center gap-4">
                 <span className="font-bold">

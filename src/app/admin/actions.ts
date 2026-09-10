@@ -7,7 +7,7 @@ import { assertRole } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createOrder } from "@/lib/orders-server";
 import { fail, ok, slugify, type ActionResult } from "@/lib/action-result";
-import { ORDER_STATUSES, ROLES } from "@/lib/constants";
+import { ORDER_STATUSES, ROLES, STORAGE_BUCKETS } from "@/lib/constants";
 
 function revalidateAdmin() {
   revalidatePath("/admin", "layout");
@@ -269,4 +269,55 @@ export async function deleteUser(formData: FormData): Promise<void> {
   const admin = createAdminClient();
   await admin.auth.admin.deleteUser(id);
   revalidateAdmin();
+}
+
+/* ============================ PAYMENT SETTINGS ============================ */
+
+export async function saveStoreSettings(
+  _prev: ActionResult | null,
+  formData: FormData,
+): Promise<ActionResult> {
+  await assertRole("ADMIN");
+  const admin = createAdminClient();
+
+  const patch: Record<string, string | null> = {
+    qris_merchant_name:
+      String(formData.get("qris_merchant_name") ?? "").trim() || null,
+    bank_name: String(formData.get("bank_name") ?? "").trim() || null,
+    bank_account_number:
+      String(formData.get("bank_account_number") ?? "").trim() || null,
+    bank_account_holder:
+      String(formData.get("bank_account_holder") ?? "").trim() || null,
+    payment_note: String(formData.get("payment_note") ?? "").trim() || null,
+  };
+
+  const file = formData.get("qris_image") as File | null;
+  if (file && file.size > 0) {
+    if (!file.type.startsWith("image/")) {
+      return fail("QRIS file must be an image.");
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      return fail("QRIS image must be 5 MB or smaller.");
+    }
+    const ext = file.name.split(".").pop()?.toLowerCase() || "png";
+    const path = `settings/qris-${Date.now()}.${ext}`;
+    const { error: upErr } = await admin.storage
+      .from(STORAGE_BUCKETS.productImages)
+      .upload(path, file, { upsert: true, contentType: file.type });
+    if (upErr) return fail(`Upload failed: ${upErr.message}`);
+    const { data: pub } = admin.storage
+      .from(STORAGE_BUCKETS.productImages)
+      .getPublicUrl(path);
+    patch.qris_image_url = pub.publicUrl;
+  }
+
+  const { error } = await admin
+    .from("store_settings")
+    .update(patch as never)
+    .eq("id", 1);
+  if (error) return fail(error.message);
+
+  revalidatePath("/admin/settings");
+  revalidatePath("/checkout/payment", "layout");
+  return ok("Payment settings saved.");
 }

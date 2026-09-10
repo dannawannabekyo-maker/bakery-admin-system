@@ -19,11 +19,11 @@ export default async function ShopLayout({
     <CartProvider>
       <div className="flex min-h-screen flex-col">
         <header className="sticky top-0 z-10 border-b border-border bg-background/80 backdrop-blur">
-          <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
-            <Link href="/shop" className="text-lg font-bold">
+          <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3">
+            <Link href="/shop" className="shrink-0 text-base font-bold sm:text-lg">
               🧁 Allins Bakery
             </Link>
-            <nav className="flex items-center gap-1 text-sm">
+            <nav className="-mr-1 flex flex-1 items-center justify-end gap-0.5 overflow-x-auto whitespace-nowrap pl-1 text-sm [&>*]:shrink-0 [&_a]:shrink-0 sm:gap-1">
               <Link
                 href="/shop"
                 className="rounded-lg px-3 py-2 font-medium hover:bg-foreground/10"

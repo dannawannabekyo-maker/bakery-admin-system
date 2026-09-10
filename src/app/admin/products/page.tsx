@@ -28,7 +28,7 @@ export default async function AdminProductsPage() {
       </Card>
 
       <Card className="overflow-x-auto p-0">
-        <table className="w-full text-sm">
+        <table className="w-full min-w-[640px] text-sm">
           <thead className="border-b border-border text-left text-foreground/60">
             <tr>
               <th className="p-3">Name</th>

@@ -9,7 +9,9 @@ import type {
   OrderStatusEnum,
   ProductRow,
   ProfileRow,
+  StoreSettingsRow,
 } from "@/lib/supabase/database.types";
+import { STORAGE_BUCKETS } from "@/lib/constants";
 
 export type ProductWithCategory = ProductRow & {
   category: Pick<CategoryRow, "id" | "name" | "slug"> | null;
@@ -123,4 +125,43 @@ export async function listAllProfiles() {
     .select("*")
     .order("created_at", { ascending: false });
   return (data ?? []) as ProfileRow[];
+}
+
+/* --------------------------------------------------------- settings & payment */
+
+/** The single store_settings row (QRIS + bank details). Readable by everyone. */
+export async function getStoreSettings(): Promise<StoreSettingsRow> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("store_settings")
+    .select("*")
+    .eq("id", 1)
+    .maybeSingle();
+  return (
+    (data as StoreSettingsRow | null) ?? {
+      id: 1,
+      qris_image_url: null,
+      qris_merchant_name: null,
+      bank_name: null,
+      bank_account_number: null,
+      bank_account_holder: null,
+      payment_note: null,
+      updated_at: new Date(0).toISOString(),
+    }
+  );
+}
+
+/**
+ * Signed URL for a payment-receipt object. Returns null for legacy reference
+ * strings (e.g. "SIM-…", "OFFLINE-…") that are not real storage paths.
+ */
+export async function getReceiptSignedUrl(
+  path: string | null | undefined,
+): Promise<string | null> {
+  if (!path || !path.includes("/")) return null;
+  const admin = createAdminClient();
+  const { data } = await admin.storage
+    .from(STORAGE_BUCKETS.paymentReceipts)
+    .createSignedUrl(path, 3600);
+  return data?.signedUrl ?? null;
 }

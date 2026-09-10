@@ -59,17 +59,35 @@ export async function salesMarkPaid(formData: FormData): Promise<ActionResult> {
   await assertRole(["SALES", "ADMIN"]);
   const supabase = await createClient();
   const id = String(formData.get("id"));
+
+  // Optional — only supplied from the "no proof yet" manual card.
+  const method = String(formData.get("payment_method") ?? "").trim();
+  const patch: { status: "PAID"; payment_method?: string } = { status: "PAID" };
+  if (method) patch.payment_method = method;
+
+  const { error } = await supabase.from("orders").update(patch).eq("id", id);
+  if (error) return fail(error.message);
+  revalidateSales();
+  return ok("Order ditandai lunas.");
+}
+
+/** Reject a submitted proof: order returns to "awaiting payment" (still UNPAID). */
+export async function salesRejectPayment(
+  formData: FormData,
+): Promise<ActionResult> {
+  await assertRole(["SALES", "ADMIN"]);
+  const supabase = await createClient();
   const { error } = await supabase
     .from("orders")
     .update({
-      status: "PAID",
-      payment_method: String(formData.get("payment_method") ?? "OFFLINE"),
-      payment_receipt_url: `OFFLINE-${id.slice(0, 8)}`,
+      payment_submitted_at: null,
+      payment_receipt_url: null,
+      payment_method: null,
     })
-    .eq("id", id);
+    .eq("id", String(formData.get("id")));
   if (error) return fail(error.message);
   revalidateSales();
-  return ok("Marked as paid.");
+  return ok("Bukti pembayaran ditolak.");
 }
 
 export async function salesCancelOrder(formData: FormData): Promise<ActionResult> {
