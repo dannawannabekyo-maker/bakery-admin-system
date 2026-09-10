@@ -1,0 +1,6 @@
+# Minimal Supabase CLI config — used by `supabase link` / `supabase db push`.
+# project_id is set by `npx supabase link --project-ref <ref>`.
+project_id = "bakery-admin-system"
+
+[db]
+major_version = 15
