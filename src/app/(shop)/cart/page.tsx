@@ -4,6 +4,7 @@ import Link from "next/link";
 
 import { useCart } from "@/components/cart/cart-context";
 import { formatCurrency } from "@/lib/format";
+import { productImageSrc } from "@/lib/images";
 import { Button, Card, EmptyState, Badge } from "@/components/ui";
 
 export default function CartPage() {
@@ -35,9 +36,9 @@ export default function CartPage() {
           <Card key={i.productId} className="flex flex-wrap items-center gap-x-4 gap-y-3">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={i.imageUrl || "/placeholder-product.svg"}
+              src={productImageSrc(i.imageUrl)}
               alt={i.name}
-              className="h-16 w-16 shrink-0 rounded-lg object-cover"
+              className="h-16 w-16 shrink-0 rounded-lg bg-muted object-cover"
             />
             <div className="min-w-0 flex-1">
               <p className="font-medium">{i.name}</p>

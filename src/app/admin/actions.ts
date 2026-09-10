@@ -23,12 +23,40 @@ export async function saveProduct(
   const admin = createAdminClient();
 
   const id = String(formData.get("id") ?? "");
+
+  // Image: an uploaded file wins; otherwise the (normalised) URL/path field.
+  let imageUrl = String(formData.get("image_url") ?? "").trim() || null;
+  const file = formData.get("image") as File | null;
+  if (file && file.size > 0) {
+    if (!file.type.startsWith("image/")) {
+      return fail("Product image must be an image file.");
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      return fail("Product image must be 5 MB or smaller.");
+    }
+    const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
+    const path = `products/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+    const { error: upErr } = await admin.storage
+      .from(STORAGE_BUCKETS.productImages)
+      .upload(path, file, { upsert: true, contentType: file.type });
+    if (upErr) return fail(`Upload failed: ${upErr.message}`);
+    imageUrl = admin.storage
+      .from(STORAGE_BUCKETS.productImages)
+      .getPublicUrl(path).data.publicUrl;
+  } else if (imageUrl && !/^(https?:)?\/\//i.test(imageUrl) && !imageUrl.startsWith("/")) {
+    // A bare bucket path like "products/x.jpg" → store the full public URL.
+    imageUrl = admin.storage
+      .from(STORAGE_BUCKETS.productImages)
+      .getPublicUrl(imageUrl.replace(new RegExp(`^${STORAGE_BUCKETS.productImages}/`), ""))
+      .data.publicUrl;
+  }
+
   const payload = {
     name: String(formData.get("name") ?? "").trim(),
     description: String(formData.get("description") ?? "").trim() || null,
     price: Math.max(0, Math.round(Number(formData.get("price") ?? 0))),
     category_id: String(formData.get("category_id") ?? "") || null,
-    image_url: String(formData.get("image_url") ?? "").trim() || null,
+    image_url: imageUrl,
     is_preorder: formData.get("is_preorder") === "on",
     stock: Math.max(0, Math.round(Number(formData.get("stock") ?? 0))),
     is_active: formData.get("is_active") === "on",

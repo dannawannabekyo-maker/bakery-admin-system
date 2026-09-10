@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import { getProductById } from "@/lib/data";
 import { formatCurrency } from "@/lib/format";
+import { productImageSrc } from "@/lib/images";
 import { Badge } from "@/components/ui";
 import { AddToCart } from "@/components/cart/add-to-cart";
 
@@ -28,9 +29,9 @@ export default async function ProductPage({
       <div className="grid gap-8 md:grid-cols-2">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={product.image_url || "/placeholder-product.svg"}
+          src={productImageSrc(product.image_url)}
           alt={product.name}
-          className="w-full rounded-xl border border-border object-cover"
+          className="aspect-[4/3] w-full rounded-xl border border-border bg-muted object-cover"
         />
 
         <div className="space-y-4">
@@ -72,7 +73,7 @@ export default async function ProductPage({
                 name: product.name,
                 price: product.price,
                 isPreorder: product.is_preorder,
-                imageUrl: product.image_url,
+                imageUrl: productImageSrc(product.image_url),
                 stock: product.stock,
               }}
             />

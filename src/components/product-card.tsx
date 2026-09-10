@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { formatCurrency } from "@/lib/format";
+import { productImageSrc } from "@/lib/images";
 import { Badge } from "@/components/ui";
 import { AddToCart } from "@/components/cart/add-to-cart";
 import type { ProductWithCategory } from "@/lib/data";
@@ -13,9 +14,9 @@ export function ProductCard({ product }: { product: ProductWithCategory }) {
       <Link href={`/product/${product.id}`} className="block">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src={product.image_url || "/placeholder-product.svg"}
+          src={productImageSrc(product.image_url)}
           alt={product.name}
-          className="aspect-[4/3] w-full object-cover"
+          className="aspect-[4/3] w-full bg-muted object-cover"
         />
       </Link>
       <div className="flex flex-1 flex-col gap-2 p-4">
@@ -62,7 +63,7 @@ export function ProductCard({ product }: { product: ProductWithCategory }) {
               name: product.name,
               price: product.price,
               isPreorder: product.is_preorder,
-              imageUrl: product.image_url,
+              imageUrl: productImageSrc(product.image_url),
               stock: product.stock,
             }}
           />

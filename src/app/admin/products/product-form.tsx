@@ -5,6 +5,7 @@ import { useActionState } from "react";
 import { saveProduct } from "../actions";
 import { Field, Input, Select, Textarea } from "@/components/ui";
 import { SubmitButton, Feedback } from "@/components/form";
+import { productImageSrc } from "@/lib/images";
 import type { CategoryRow, ProductRow } from "@/lib/supabase/database.types";
 
 export function ProductForm({
@@ -62,9 +63,31 @@ export function ProductForm({
         />
       </Field>
 
-      <Field label="Image URL" hint="Public URL or product-images bucket path">
-        <Input name="image_url" defaultValue={product?.image_url ?? ""} />
-      </Field>
+      <div className="space-y-2 sm:col-span-2">
+        <p className="text-sm font-medium">Photo</p>
+        {product?.image_url && (
+          <>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={productImageSrc(product.image_url)}
+              alt={product.name}
+              className="aspect-[4/3] w-40 rounded-lg border border-border bg-muted object-cover"
+            />
+          </>
+        )}
+        <Field
+          label="Upload image"
+          hint="JPG / WebP, 4:3 (e.g. 1200×900), ideally under 500 KB. Max 5 MB. Leave empty to keep the current photo."
+        >
+          <Input name="image" type="file" accept="image/*" />
+        </Field>
+        <Field
+          label="…or image URL"
+          hint="A full https:// link, or a path inside the product-images bucket."
+        >
+          <Input name="image_url" defaultValue={product?.image_url ?? ""} />
+        </Field>
+      </div>
 
       <div className="sm:col-span-2">
         <Field label="Description">
