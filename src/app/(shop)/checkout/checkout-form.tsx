@@ -9,9 +9,11 @@ import { createCustomerOrder } from "./actions";
 import { formatCurrency } from "@/lib/format";
 import { Card, Field, Input, EmptyState, Alert } from "@/components/ui";
 import { SubmitButton, Feedback } from "@/components/form";
+import { PickupDatePicker, type PickupLoad } from "./pickup-date-picker";
 
 export function CheckoutForm({
   customer,
+  loads,
 }: {
   customer: {
     name: string;
@@ -19,8 +21,12 @@ export function CheckoutForm({
     address: string | null;
     email: string | null;
   };
+  loads: PickupLoad[];
 }) {
   const { items, total, hasPreorder, clear } = useCart();
+  const preorderQty = items
+    .filter((i) => i.isPreorder)
+    .reduce((sum, i) => sum + i.quantity, 0);
   const [state, action] = useActionState(createCustomerOrder, null);
   const router = useRouter();
 
@@ -47,10 +53,6 @@ export function CheckoutForm({
       />
     );
   }
-
-  const minDate = new Date(Date.now() + 24 * 3600 * 1000)
-    .toISOString()
-    .slice(0, 16);
 
   return (
     <form action={action} className="space-y-5 pb-24 sm:pb-0">
@@ -95,20 +97,19 @@ export function CheckoutForm({
       </Card>
 
       {hasPreorder ? (
-        <Card className="space-y-2">
-          <p className="font-semibold">Pre-order — pickup / delivery date</p>
-          <p className="text-sm text-foreground/60">
-            Your cart contains made-to-order items. Choose when you&apos;d like
-            them (at least 24 hours out).
-          </p>
-          <Field label="Date &amp; time">
-            <Input
-              type="datetime-local"
-              name="pickup_or_delivery_date"
-              min={minDate}
-              required
-            />
-          </Field>
+        <Card className="space-y-3">
+          <div>
+            <p className="font-semibold">Pre-order — pickup / delivery date</p>
+            <p className="text-sm text-foreground/60">
+              Production is limited per night ({preorderQty} pcs needed for
+              this cart). Dates that can&apos;t fit your order are greyed out.
+            </p>
+          </div>
+          <PickupDatePicker
+            loads={loads}
+            cartQty={preorderQty}
+            name="pickup_or_delivery_date"
+          />
         </Card>
       ) : (
         <Card>

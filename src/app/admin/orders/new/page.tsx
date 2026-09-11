@@ -29,6 +29,7 @@ export default async function AdminNewOrderPage() {
           customers={customers}
           products={products ?? []}
           action={adminCreateManualOrder}
+          allowCapacityOverride
         />
       </Card>
     </>

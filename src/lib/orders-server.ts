@@ -4,6 +4,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { checkCapacity } from "@/lib/capacity";
 import type { Database } from "@/lib/supabase/database.types";
 import type { OrderType } from "@/lib/constants";
 
@@ -17,6 +18,8 @@ export type CreateOrderInput = {
   adminNotes?: string | null;
   /** Use the service-role client (Admin / Sales server flows). */
   privileged?: boolean;
+  /** ADMIN-only escape hatch to force a booking past the nightly capacity. */
+  bypassCapacity?: boolean;
 };
 
 export type CreateOrderResult =
@@ -59,6 +62,7 @@ export async function createOrder(
   const byId = new Map(products.map((p) => [p.id, p]));
   let hasPreorder = false;
   let total = 0;
+  let poQty = 0;
   const itemRows: {
     product_id: string;
     quantity: number;
@@ -73,6 +77,7 @@ export async function createOrder(
     }
     if (p.is_preorder) {
       hasPreorder = true;
+      poQty += item.quantity;
     } else if (p.stock < item.quantity) {
       return {
         ok: false,
@@ -97,6 +102,13 @@ export async function createOrder(
     }
     if (new Date(input.pickupDate).getTime() < Date.now()) {
       return { ok: false, error: "The pickup / delivery date must be in the future." };
+    }
+
+    // Nightly production ceiling — total pre-order ITEM quantity per pickup
+    // date, not order count. ADMIN can force a booking past capacity.
+    if (!input.bypassCapacity) {
+      const capacity = await checkCapacity(input.pickupDate, poQty);
+      if (!capacity.ok) return { ok: false, error: capacity.error };
     }
   }
 

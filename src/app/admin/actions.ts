@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { assertRole } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createOrder } from "@/lib/orders-server";
+import { logAudit } from "@/lib/audit";
 import { fail, ok, slugify, type ActionResult } from "@/lib/action-result";
 import { ORDER_STATUSES, ROLES, STORAGE_BUCKETS } from "@/lib/constants";
 import { resolveImageUrl } from "@/lib/images";
@@ -20,7 +21,7 @@ export async function saveProduct(
   _prev: ActionResult | null,
   formData: FormData,
 ): Promise<ActionResult> {
-  await assertRole("ADMIN");
+  const { userId, profile } = await assertRole("ADMIN");
   const admin = createAdminClient();
 
   const id = String(formData.get("id") ?? "");
@@ -69,15 +70,42 @@ export async function saveProduct(
   if (res.error) return fail(res.error.message);
   revalidateAdmin();
   revalidatePath("/shop");
+  if (id) revalidatePath(`/product/${id}`);
+  await logAudit({
+    actorId: userId,
+    actorName: profile.full_name,
+    actorRole: profile.role,
+    action: id ? "PRODUCT_UPDATE" : "PRODUCT_CREATE",
+    entityType: "product",
+    entityId: id || undefined,
+    summary: `${profile.full_name || "Admin"} ${id ? "updated" : "created"} product "${payload.name}"`,
+    metadata: payload,
+  });
   return ok(id ? "Product updated." : "Product created.");
 }
 
 export async function deleteProduct(formData: FormData): Promise<void> {
-  await assertRole("ADMIN");
+  const { userId, profile } = await assertRole("ADMIN");
   const admin = createAdminClient();
-  await admin.from("products").delete().eq("id", String(formData.get("id")));
+  const id = String(formData.get("id"));
+  const { data: deleted } = await admin
+    .from("products")
+    .delete()
+    .eq("id", id)
+    .select("name")
+    .maybeSingle();
   revalidateAdmin();
   revalidatePath("/shop");
+  revalidatePath(`/product/${id}`);
+  await logAudit({
+    actorId: userId,
+    actorName: profile.full_name,
+    actorRole: profile.role,
+    action: "PRODUCT_DELETE",
+    entityType: "product",
+    entityId: id,
+    summary: `${profile.full_name || "Admin"} deleted product "${deleted?.name ?? id}"`,
+  });
 }
 
 /* ============================ CATEGORIES ============================ */
@@ -86,7 +114,7 @@ export async function saveCategory(
   _prev: ActionResult | null,
   formData: FormData,
 ): Promise<ActionResult> {
-  await assertRole("ADMIN");
+  const { userId, profile } = await assertRole("ADMIN");
   const admin = createAdminClient();
 
   const id = String(formData.get("id") ?? "");
@@ -102,15 +130,39 @@ export async function saveCategory(
   if (res.error) return fail(res.error.message);
   revalidateAdmin();
   revalidatePath("/shop");
+  await logAudit({
+    actorId: userId,
+    actorName: profile.full_name,
+    actorRole: profile.role,
+    action: id ? "CATEGORY_UPDATE" : "CATEGORY_CREATE",
+    entityType: "category",
+    entityId: id || undefined,
+    summary: `${profile.full_name || "Admin"} ${id ? "updated" : "created"} category "${name}"`,
+  });
   return ok(id ? "Category updated." : "Category created.");
 }
 
 export async function deleteCategory(formData: FormData): Promise<void> {
-  await assertRole("ADMIN");
+  const { userId, profile } = await assertRole("ADMIN");
   const admin = createAdminClient();
-  await admin.from("categories").delete().eq("id", String(formData.get("id")));
+  const id = String(formData.get("id"));
+  const { data: deleted } = await admin
+    .from("categories")
+    .delete()
+    .eq("id", id)
+    .select("name")
+    .maybeSingle();
   revalidateAdmin();
   revalidatePath("/shop");
+  await logAudit({
+    actorId: userId,
+    actorName: profile.full_name,
+    actorRole: profile.role,
+    action: "CATEGORY_DELETE",
+    entityType: "category",
+    entityId: id,
+    summary: `${profile.full_name || "Admin"} deleted category "${deleted?.name ?? id}"`,
+  });
 }
 
 /* ============================ ORDERS (God Mode) ============================ */
@@ -119,19 +171,30 @@ export async function adminSetOrderStatus(
   _prev: ActionResult | null,
   formData: FormData,
 ): Promise<ActionResult> {
-  await assertRole("ADMIN");
+  const { userId, profile } = await assertRole("ADMIN");
   const admin = createAdminClient();
   const id = String(formData.get("id"));
   const status = String(formData.get("status"));
   if (!ORDER_STATUSES.includes(status as never)) return fail("Unknown status.");
 
-  const { error } = await admin
+  const { data: updated, error } = await admin
     .from("orders")
     .update({ status: status as never })
-    .eq("id", id);
+    .eq("id", id)
+    .select("order_number")
+    .maybeSingle();
   if (error) return fail(error.message);
   revalidateAdmin();
   revalidatePath(`/admin/orders/${id}`);
+  await logAudit({
+    actorId: userId,
+    actorName: profile.full_name,
+    actorRole: profile.role,
+    action: "ORDER_STATUS_CHANGE",
+    entityType: "order",
+    entityId: id,
+    summary: `${profile.full_name || "Admin"} force-set order ${updated?.order_number ?? id} to ${status}`,
+  });
   return ok(`Status set to ${status}.`);
 }
 
@@ -139,7 +202,7 @@ export async function adminUpdateOrderMeta(
   _prev: ActionResult | null,
   formData: FormData,
 ): Promise<ActionResult> {
-  await assertRole("ADMIN");
+  const { userId, profile } = await assertRole("ADMIN");
   const admin = createAdminClient();
   const id = String(formData.get("id"));
 
@@ -150,18 +213,48 @@ export async function adminUpdateOrderMeta(
     pickup_or_delivery_date: rawDate ? new Date(rawDate).toISOString() : null,
   };
 
-  const { error } = await admin.from("orders").update(patch).eq("id", id);
+  const { data: updated, error } = await admin
+    .from("orders")
+    .update(patch)
+    .eq("id", id)
+    .select("order_number")
+    .maybeSingle();
   if (error) return fail(error.message);
   revalidateAdmin();
   revalidatePath(`/admin/orders/${id}`);
+  await logAudit({
+    actorId: userId,
+    actorName: profile.full_name,
+    actorRole: profile.role,
+    action: "ORDER_META_UPDATE",
+    entityType: "order",
+    entityId: id,
+    summary: `${profile.full_name || "Admin"} updated details for order ${updated?.order_number ?? id}`,
+    metadata: patch,
+  });
   return ok("Order updated.");
 }
 
 export async function adminDeleteOrder(formData: FormData): Promise<void> {
-  await assertRole("ADMIN");
+  const { userId, profile } = await assertRole("ADMIN");
   const admin = createAdminClient();
-  await admin.from("orders").delete().eq("id", String(formData.get("id")));
+  const id = String(formData.get("id"));
+  const { data: deleted } = await admin
+    .from("orders")
+    .delete()
+    .eq("id", id)
+    .select("order_number")
+    .maybeSingle();
   revalidateAdmin();
+  await logAudit({
+    actorId: userId,
+    actorName: profile.full_name,
+    actorRole: profile.role,
+    action: "ORDER_DELETE",
+    entityType: "order",
+    entityId: id,
+    summary: `${profile.full_name || "Admin"} deleted order ${deleted?.order_number ?? id}`,
+  });
   redirect("/admin/orders");
 }
 
@@ -169,7 +262,7 @@ export async function adminCreateManualOrder(
   _prev: ActionResult | null,
   formData: FormData,
 ): Promise<ActionResult> {
-  const { userId } = await assertRole("ADMIN");
+  const { userId, profile } = await assertRole("ADMIN");
 
   const customerId = String(formData.get("customer_id") ?? "");
   if (!customerId) return fail("Choose a customer.");
@@ -189,6 +282,7 @@ export async function adminCreateManualOrder(
     pickupDate: pickupRaw ? new Date(pickupRaw).toISOString() : null,
     adminNotes: String(formData.get("admin_notes") ?? "").trim() || null,
     privileged: true,
+    bypassCapacity: formData.get("bypass_capacity") === "on",
   });
 
   if (!res.ok) return fail(res.error);
@@ -207,6 +301,15 @@ export async function adminCreateManualOrder(
   }
 
   revalidateAdmin();
+  await logAudit({
+    actorId: userId,
+    actorName: profile.full_name,
+    actorRole: profile.role,
+    action: "ORDER_MANUAL_CREATE",
+    entityType: "order",
+    entityId: res.orderId,
+    summary: `${profile.full_name || "Admin"} created manual order ${res.orderNumber}${formData.get("mark_paid") === "on" ? " (marked paid)" : ""}`,
+  });
   return ok(`Order ${res.orderNumber} created.`, `/admin/orders/${res.orderId}`);
 }
 
@@ -216,7 +319,7 @@ export async function createUser(
   _prev: ActionResult | null,
   formData: FormData,
 ): Promise<ActionResult> {
-  await assertRole("ADMIN");
+  const { userId, profile: actor } = await assertRole("ADMIN");
   const admin = createAdminClient();
 
   const email = String(formData.get("email") ?? "").trim();
@@ -251,6 +354,15 @@ export async function createUser(
   if (pErr) return fail(`User created, but profile update failed: ${pErr.message}`);
 
   revalidateAdmin();
+  await logAudit({
+    actorId: userId,
+    actorName: actor.full_name,
+    actorRole: actor.role,
+    action: "USER_CREATE",
+    entityType: "profile",
+    entityId: data.user.id,
+    summary: `${actor.full_name || "Admin"} created user ${email} as ${role}`,
+  });
   return ok(`${email} created as ${role}.`);
 }
 
@@ -258,17 +370,24 @@ export async function updateUser(
   _prev: ActionResult | null,
   formData: FormData,
 ): Promise<ActionResult> {
-  await assertRole("ADMIN");
+  const { userId, profile: actor } = await assertRole("ADMIN");
   const admin = createAdminClient();
   const id = String(formData.get("id"));
   const role = String(formData.get("role") ?? "CUSTOMER");
   if (!ROLES.includes(role as never)) return fail("Invalid role.");
 
+  const { data: before } = await admin
+    .from("profiles")
+    .select("role, full_name")
+    .eq("id", id)
+    .maybeSingle();
+
+  const fullName = String(formData.get("full_name") ?? "").trim();
   const { error } = await admin
     .from("profiles")
     .update({
       role: role as never,
-      full_name: String(formData.get("full_name") ?? "").trim(),
+      full_name: fullName,
       phone_number: String(formData.get("phone_number") ?? "").trim() || null,
       address: String(formData.get("address") ?? "").trim() || null,
     })
@@ -276,25 +395,55 @@ export async function updateUser(
   if (error) return fail(error.message);
 
   const newPassword = String(formData.get("password") ?? "");
+  let passwordReset = false;
   if (newPassword) {
     if (newPassword.length < 8) return fail("Password must be at least 8 characters.");
     const { error: aErr } = await admin.auth.admin.updateUserById(id, {
       password: newPassword,
     });
     if (aErr) return fail(aErr.message);
+    passwordReset = true;
   }
 
   revalidateAdmin();
+  const roleChanged = before && before.role !== role;
+  await logAudit({
+    actorId: userId,
+    actorName: actor.full_name,
+    actorRole: actor.role,
+    action: roleChanged ? "USER_ROLE_CHANGE" : "USER_UPDATE",
+    entityType: "profile",
+    entityId: id,
+    summary: roleChanged
+      ? `${actor.full_name || "Admin"} changed ${before?.full_name || fullName}'s role from ${before?.role} to ${role}`
+      : `${actor.full_name || "Admin"} updated ${fullName || id}${passwordReset ? " (password reset)" : ""}`,
+  });
   return ok("User updated.");
 }
 
 export async function deleteUser(formData: FormData): Promise<void> {
-  const { userId } = await assertRole("ADMIN");
+  const { userId, profile: actor } = await assertRole("ADMIN");
   const id = String(formData.get("id"));
   if (id === userId) return; // never delete yourself
   const admin = createAdminClient();
+
+  const { data: target } = await admin
+    .from("profiles")
+    .select("full_name, role")
+    .eq("id", id)
+    .maybeSingle();
+
   await admin.auth.admin.deleteUser(id);
   revalidateAdmin();
+  await logAudit({
+    actorId: userId,
+    actorName: actor.full_name,
+    actorRole: actor.role,
+    action: "USER_DELETE",
+    entityType: "profile",
+    entityId: id,
+    summary: `${actor.full_name || "Admin"} deleted user ${target?.full_name ?? id} (${target?.role ?? "?"})`,
+  });
 }
 
 /* ============================ PAYMENT SETTINGS ============================ */
@@ -303,10 +452,19 @@ export async function saveStoreSettings(
   _prev: ActionResult | null,
   formData: FormData,
 ): Promise<ActionResult> {
-  await assertRole("ADMIN");
+  const { userId, profile: actor } = await assertRole("ADMIN");
   const admin = createAdminClient();
 
-  const patch: Record<string, string | null> = {
+  const taxRatePercent = Number(formData.get("tax_rate_percent") ?? NaN);
+  if (!Number.isFinite(taxRatePercent) || taxRatePercent < 0 || taxRatePercent >= 100) {
+    return fail("Tax rate must be between 0 and 99.99%.");
+  }
+  const capacity = Math.round(Number(formData.get("daily_po_item_capacity") ?? NaN));
+  if (!Number.isFinite(capacity) || capacity < 0) {
+    return fail("Nightly capacity must be a non-negative number.");
+  }
+
+  const patch: Record<string, string | number | null> = {
     qris_merchant_name:
       String(formData.get("qris_merchant_name") ?? "").trim() || null,
     bank_name: String(formData.get("bank_name") ?? "").trim() || null,
@@ -315,6 +473,9 @@ export async function saveStoreSettings(
     bank_account_holder:
       String(formData.get("bank_account_holder") ?? "").trim() || null,
     payment_note: String(formData.get("payment_note") ?? "").trim() || null,
+    // store_settings.tax_rate is numeric(5,4) — keep 4 decimal places.
+    tax_rate: Math.round((taxRatePercent / 100) * 10000) / 10000,
+    daily_po_item_capacity: capacity,
   };
 
   const file = formData.get("qris_image") as File | null;
@@ -345,5 +506,18 @@ export async function saveStoreSettings(
 
   revalidatePath("/admin/settings");
   revalidatePath("/checkout/payment", "layout");
+  await logAudit({
+    actorId: userId,
+    actorName: actor.full_name,
+    actorRole: actor.role,
+    action: "SETTINGS_UPDATE",
+    entityType: "store_settings",
+    entityId: "1",
+    summary: `${actor.full_name || "Admin"} updated payment/tax/capacity settings`,
+    metadata: {
+      tax_rate: patch.tax_rate,
+      daily_po_item_capacity: patch.daily_po_item_capacity,
+    },
+  });
   return ok("Payment settings saved.");
 }

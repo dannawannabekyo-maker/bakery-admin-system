@@ -8,6 +8,7 @@ import { Card, StatusBadge } from "@/components/ui";
 import { ConfirmButton } from "@/components/form";
 import { PageHeader } from "@/components/dashboard-shell";
 import { OrderTimeline } from "@/components/order-timeline";
+import { ReceiptLink } from "@/components/receipt-link";
 import { adminDeleteOrder } from "../../actions";
 import { OrderAdminPanel } from "./order-admin-panel";
 
@@ -30,9 +31,12 @@ export default async function AdminOrderDetail({
         title={`Order ${order.order_number}`}
         description={`Placed ${formatDateTime(order.created_at)} · ${order.order_type}`}
         action={
-          <Link href="/admin/orders" className="text-sm text-primary underline">
-            ← All orders
-          </Link>
+          <div className="flex items-center gap-4">
+            <ReceiptLink orderId={order.id}>🖨️ Cetak nota</ReceiptLink>
+            <Link href="/admin/orders" className="text-sm text-primary underline">
+              ← All orders
+            </Link>
+          </div>
         }
       />
 

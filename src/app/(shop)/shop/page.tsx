@@ -1,11 +1,13 @@
 import Link from "next/link";
 
-import { getActiveCatalog } from "@/lib/data";
+import { getPublicCatalog } from "@/lib/data";
 import { EmptyState } from "@/components/ui";
 import { ProductCard } from "@/components/product-card";
 
 export const metadata = { title: "Shop" };
-export const dynamic = "force-dynamic";
+// No explicit `dynamic` export needed: reading `searchParams` already forces
+// per-request rendering. Using the cookie-free public catalog read still
+// avoids an unnecessary SSR auth-cookie round trip on every page view.
 
 export default async function ShopPage({
   searchParams,
@@ -13,7 +15,7 @@ export default async function ShopPage({
   searchParams: Promise<{ category?: string; type?: string }>;
 }) {
   const { category, type } = await searchParams;
-  const { categories, products } = await getActiveCatalog();
+  const { categories, products } = await getPublicCatalog();
 
   let visible = products;
   if (category) visible = visible.filter((p) => p.category?.slug === category);

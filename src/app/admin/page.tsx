@@ -2,7 +2,8 @@ import Link from "next/link";
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { listOrders } from "@/lib/data";
-import { formatCurrency, formatDateTime } from "@/lib/format";
+import { getFinanceSettings } from "@/lib/finance";
+import { formatCurrency, formatDateTime, taxBreakdown } from "@/lib/format";
 import { ORDER_STATUSES } from "@/lib/constants";
 import { Card } from "@/components/ui";
 import { StatusBadge } from "@/components/ui";
@@ -14,11 +15,12 @@ export const dynamic = "force-dynamic";
 export default async function AdminOverview() {
   const admin = createAdminClient();
 
-  const [{ data: orders }, { data: products }, { count: userCount }] =
+  const [{ data: orders }, { data: products }, { count: userCount }, { taxRate }] =
     await Promise.all([
       admin.from("orders").select("status,total_amount,created_at"),
       admin.from("products").select("id,name,stock,is_preorder,is_active"),
       admin.from("profiles").select("id", { count: "exact", head: true }),
+      getFinanceSettings(),
     ]);
 
   const byStatus = Object.fromEntries(
@@ -37,10 +39,13 @@ export default async function AdminOverview() {
     .sort((a, b) => a.stock - b.stock);
 
   const recent = await listOrders({ admin: true, limit: 8 });
+  const { net: netRevenue, tax: taxCollected } = taxBreakdown(revenue, taxRate);
 
   const stats = [
     { label: "Total orders", value: (orders ?? []).length },
-    { label: "Recognised revenue", value: formatCurrency(revenue) },
+    { label: "Gross revenue (incl. tax)", value: formatCurrency(revenue) },
+    { label: "Net revenue", value: formatCurrency(netRevenue) },
+    { label: "Tax collected", value: formatCurrency(taxCollected) },
     { label: "Unpaid", value: byStatus.UNPAID },
     { label: "In production", value: byStatus.IN_PRODUCTION },
     { label: "Ready", value: byStatus.READY },

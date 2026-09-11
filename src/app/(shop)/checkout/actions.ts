@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { assertRole } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { createOrder } from "@/lib/orders-server";
+import { logAudit } from "@/lib/audit";
 import { fail, ok, type ActionResult } from "@/lib/action-result";
 import { PAYMENT_METHODS, STORAGE_BUCKETS } from "@/lib/constants";
 
@@ -12,7 +13,7 @@ export async function createCustomerOrder(
   _prev: ActionResult | null,
   formData: FormData,
 ): Promise<ActionResult> {
-  const { userId } = await assertRole(["CUSTOMER", "ADMIN"]);
+  const { userId, profile } = await assertRole(["CUSTOMER", "ADMIN"]);
 
   let items: { productId: string; quantity: number }[] = [];
   try {
@@ -33,6 +34,15 @@ export async function createCustomerOrder(
   if (!res.ok) return fail(res.error);
 
   revalidatePath("/orders");
+  await logAudit({
+    actorId: userId,
+    actorName: profile.full_name,
+    actorRole: profile.role,
+    action: "ORDER_PLACE",
+    entityType: "order",
+    entityId: res.orderId,
+    summary: `${profile.full_name || "Customer"} placed order ${res.orderNumber}`,
+  });
   return ok("Order created.", `/checkout/payment/${res.orderId}`);
 }
 
@@ -99,6 +109,15 @@ export async function submitPaymentProof(
 
   revalidatePath("/orders");
   revalidatePath(`/orders/${orderId}`);
+  await logAudit({
+    actorId: userId,
+    actorName: profile.full_name,
+    actorRole: profile.role,
+    action: "PAYMENT_PROOF_SUBMIT",
+    entityType: "order",
+    entityId: orderId,
+    summary: `${profile.full_name || "Customer"} submitted a ${method} payment proof for order ${orderId}`,
+  });
   return ok(
     "Bukti pembayaran terkirim. Menunggu verifikasi.",
     `/orders/${orderId}?submitted=1`,
@@ -106,13 +125,25 @@ export async function submitPaymentProof(
 }
 
 export async function cancelMyOrder(formData: FormData): Promise<ActionResult> {
-  await assertRole(["CUSTOMER", "ADMIN"]);
+  const { userId, profile } = await assertRole(["CUSTOMER", "ADMIN"]);
   const supabase = await createClient();
-  const { error } = await supabase
+  const id = String(formData.get("id"));
+  const { data: updated, error } = await supabase
     .from("orders")
     .update({ status: "CANCELLED" })
-    .eq("id", String(formData.get("id")));
+    .eq("id", id)
+    .select("order_number")
+    .maybeSingle();
   if (error) return fail(error.message);
   revalidatePath("/orders");
+  await logAudit({
+    actorId: userId,
+    actorName: profile.full_name,
+    actorRole: profile.role,
+    action: "ORDER_CANCEL",
+    entityType: "order",
+    entityId: id,
+    summary: `${profile.full_name || "Customer"} cancelled order ${updated?.order_number ?? id}`,
+  });
   return ok("Order cancelled.");
 }

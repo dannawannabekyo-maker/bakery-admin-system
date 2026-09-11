@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
 import { ROLE_HOME } from "@/lib/auth";
+import { logAudit } from "@/lib/audit";
 import type { Role } from "@/lib/constants";
 
 export type AuthState = { error: string | null };
@@ -27,13 +28,22 @@ export async function signIn(
     data: { user },
   } = await supabase.auth.getUser();
   let dest = next && next.startsWith("/") ? next : "";
-  if (!dest && user) {
+  if (user) {
     const { data: profile } = await supabase
       .from("profiles")
-      .select("role")
+      .select("role, full_name")
       .eq("id", user.id)
       .single();
-    dest = ROLE_HOME[(profile?.role as Role) ?? "CUSTOMER"] ?? "/shop";
+    if (!dest) dest = ROLE_HOME[(profile?.role as Role) ?? "CUSTOMER"] ?? "/shop";
+    await logAudit({
+      actorId: user.id,
+      actorName: profile?.full_name || email,
+      actorRole: (profile?.role as Role) ?? null,
+      action: "LOGIN",
+      entityType: "auth",
+      entityId: user.id,
+      summary: `${profile?.full_name || email} signed in`,
+    });
   }
   revalidatePath("/", "layout");
   redirect(dest || "/shop");
@@ -70,6 +80,18 @@ export async function signUp(
   const {
     data: { session },
   } = await supabase.auth.getSession();
+
+  if (session?.user) {
+    await logAudit({
+      actorId: session.user.id,
+      actorName: fullName,
+      actorRole: "CUSTOMER",
+      action: "REGISTER",
+      entityType: "auth",
+      entityId: session.user.id,
+      summary: `${fullName} registered as a new customer`,
+    });
+  }
 
   revalidatePath("/", "layout");
   if (session) redirect("/shop");

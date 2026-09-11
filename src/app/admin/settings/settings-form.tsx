@@ -74,6 +74,35 @@ export function PaymentSettingsForm({
       </Card>
 
       <Card className="space-y-3">
+        <h2 className="font-semibold">Finance &amp; production</h2>
+        <Field
+          label="Inclusive tax rate (%)"
+          hint="Menu prices already include this tax; it's only separated out in the Finance reports."
+        >
+          <Input
+            name="tax_rate_percent"
+            type="number"
+            step="0.01"
+            min={0}
+            max={99}
+            defaultValue={(settings.tax_rate * 100).toString()}
+          />
+        </Field>
+        <Field
+          label="Nightly pre-order capacity (items)"
+          hint="Max total pre-order item quantity that can be baked for any one pickup date."
+        >
+          <Input
+            name="daily_po_item_capacity"
+            type="number"
+            step="1"
+            min={0}
+            defaultValue={settings.daily_po_item_capacity}
+          />
+        </Field>
+      </Card>
+
+      <Card className="space-y-3">
         <h2 className="font-semibold">Extra note</h2>
         <Field
           label="Payment instructions (optional)"

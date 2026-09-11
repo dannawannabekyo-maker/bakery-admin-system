@@ -20,6 +20,7 @@ export function ManualOrderForm({
   products,
   action,
   allowMarkPaid = true,
+  allowCapacityOverride = false,
 }: {
   customers: ProfileRow[];
   products: Pick<
@@ -28,6 +29,8 @@ export function ManualOrderForm({
   >[];
   action: ManualAction;
   allowMarkPaid?: boolean;
+  /** ADMIN only: let this order skip the nightly PO capacity check. */
+  allowCapacityOverride?: boolean;
 }) {
   const [state, formAction] = useActionState(action, null);
   const [lines, setLines] = useState<Line[]>([{ productId: "", quantity: 1 }]);
@@ -141,6 +144,11 @@ export function ManualOrderForm({
             ? "Pickup / delivery date (required)"
             : "Pickup / delivery date (optional)"
         }
+        hint={
+          hasPreorder
+            ? "Subject to the nightly production capacity, same as the storefront."
+            : undefined
+        }
       >
         <Input
           name="pickup_or_delivery_date"
@@ -148,6 +156,13 @@ export function ManualOrderForm({
           required={hasPreorder}
         />
       </Field>
+
+      {hasPreorder && allowCapacityOverride && (
+        <label className="flex items-center gap-2 text-sm">
+          <input type="checkbox" name="bypass_capacity" />
+          Override nightly capacity for this order (Admin only)
+        </label>
+      )}
 
       <Field label="Notes">
         <Textarea name="admin_notes" placeholder="Offline customer, phone order, etc." />

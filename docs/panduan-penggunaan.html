@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8" />
+<title>Panduan Penggunaan — Allins Bakery</title>
+<style>
+  @page { size: A4; margin: 18mm 16mm; }
+  * { box-sizing: border-box; }
+  body {
+    font-family: "Segoe UI", Arial, sans-serif;
+    color: #2a2321;
+    font-size: 11.5pt;
+    line-height: 1.55;
+    margin: 0;
+  }
+  h1, h2, h3 { color: #7a3b2e; font-family: "Segoe UI", Arial, sans-serif; }
+  h1 { font-size: 24pt; margin: 0 0 4pt; }
+  h2 { font-size: 16pt; border-bottom: 2pt solid #f0d9c8; padding-bottom: 4pt; margin-top: 0; }
+  h3 { font-size: 12.5pt; color: #a5563f; margin-bottom: 4pt; }
+  .cover { page-break-after: always; padding-top: 70mm; text-align: center; }
+  .cover .logo { font-size: 56pt; margin-bottom: 8pt; }
+  .cover .subtitle { font-size: 13pt; color: #6b5b54; margin-top: 6pt; }
+  .cover .meta { margin-top: 60pt; font-size: 10pt; color: #8a7b73; }
+  .toc { page-break-after: always; }
+  .toc ol { line-height: 2; font-size: 11.5pt; }
+  .toc a { color: #2a2321; text-decoration: none; }
+  .chapter { page-break-before: always; }
+  .chapter:first-of-type { page-break-before: auto; }
+  table { width: 100%; border-collapse: collapse; margin: 8pt 0 14pt; font-size: 10.5pt; }
+  th, td { border: 0.75pt solid #ddc9bd; padding: 5pt 7pt; text-align: left; vertical-align: top; }
+  th { background: #fbeee4; color: #7a3b2e; }
+  .badge { display: inline-block; padding: 1pt 7pt; border-radius: 9pt; font-size: 9pt; font-weight: 600; }
+  .b-done { background: #dcefe0; color: #256b3a; }
+  .b-progress { background: #fde8d2; color: #96591b; }
+  .b-todo { background: #f3dede; color: #9b3535; }
+  .note { background: #fff6ec; border-left: 4pt solid #e3a45c; padding: 8pt 12pt; margin: 10pt 0; font-size: 10.5pt; }
+  .warn { background: #fdecec; border-left: 4pt solid #cf5c5c; padding: 8pt 12pt; margin: 10pt 0; font-size: 10.5pt; }
+  .kbd { background: #f0e9e4; border: 0.5pt solid #d8c9bd; border-radius: 4pt; padding: 0 4pt; font-family: Consolas, monospace; font-size: 10pt; }
+  ul, ol { margin: 4pt 0 10pt 0; padding-left: 20pt; }
+  li { margin-bottom: 2pt; }
+  .role-tag { font-weight: 700; color: #7a3b2e; }
+  .footnote { font-size: 9pt; color: #8a7b73; }
+  .cols2 { columns: 2; column-gap: 18pt; }
+</style>
+</head>
+<body>
+
+<!-- ============================================================ COVER -->
+<section class="cover">
+  <div class="logo">🧁</div>
+  <h1>Panduan Penggunaan Sistem</h1>
+  <div class="subtitle">Allins Bakery — Order &amp; Administration System</div>
+  <div class="meta">
+    Versi dokumen: 1.0 &nbsp;·&nbsp; 11 September 2026<br />
+    Disusun untuk: Owner / Admin, Sales, Kitchen (Production), Finance, dan Pelanggan
+  </div>
+</section>
+
+<!-- ============================================================ TOC -->
+<section class="toc">
+  <h2>Daftar Isi</h2>
+  <ol>
+    <li><a href="#bab1">Ringkasan Sistem &amp; Peran Pengguna</a></li>
+    <li><a href="#bab2">Alur Belanja Pelanggan (Ready Stock &amp; Pre-Order)</a></li>
+    <li><a href="#bab3">Panduan Admin (Owner)</a></li>
+    <li><a href="#bab4">Panduan Sales</a></li>
+    <li><a href="#bab5">Panduan Kitchen / Production</a></li>
+    <li><a href="#bab6">Panduan Finance</a></li>
+    <li><a href="#bab7">Nota Digital &amp; Cetak Nota Offline</a></li>
+    <li><a href="#bab8">Kuota Produksi Malam (PO Capacity)</a></li>
+    <li><a href="#bab9">Pajak Inklusif pada Laporan Keuangan</a></li>
+    <li><a href="#bab10">Status Fitur &amp; Rencana Berikutnya</a></li>
+    <li><a href="#bab11">Pendapat: Efisiensi &amp; Kekurangan Sistem</a></li>
+    <li><a href="#bab12">Lampiran Teknis Singkat</a></li>
+  </ol>
+</section>
+
+<!-- ============================================================ BAB 1 -->
+<section class="chapter" id="bab1">
+  <h2>1. Ringkasan Sistem &amp; Peran Pengguna</h2>
+  <p>
+    Allins Bakery System adalah aplikasi web (Next.js + Supabase) untuk mengelola
+    toko roti secara end-to-end: katalog produk, keranjang &amp; checkout pelanggan,
+    pembayaran manual (QRIS/transfer), papan produksi dapur, hingga laporan keuangan.
+    Akses dibagi berdasarkan <b>peran (role)</b> — setiap peran hanya melihat menu
+    dan data yang relevan dengannya.
+  </p>
+  <table>
+    <tr><th>Peran</th><th>Dashboard</th><th>Fungsi utama</th></tr>
+    <tr><td class="role-tag">Admin (Owner)</td><td><span class="kbd">/admin</span></td>
+        <td>Akses penuh ke seluruh sistem ("God Mode"): produk, kategori, user, semua pesanan, pengaturan pembayaran/pajak/kapasitas, dan seluruh dashboard peran lain.</td></tr>
+    <tr><td class="role-tag">Sales</td><td><span class="kbd">/sales</span></td>
+        <td>Verifikasi bukti pembayaran, tandai lunas, input pesanan manual (telepon/walk-in), cetak nota.</td></tr>
+    <tr><td class="role-tag">Production (Kitchen)</td><td><span class="kbd">/production</span></td>
+        <td>Papan kanban produksi: Paid → In Production → Ready.</td></tr>
+    <tr><td class="role-tag">Finance <span class="badge b-done">Baru</span></td><td><span class="kbd">/finance</span></td>
+        <td>Rekap kas harian/mingguan/bulanan, modal &amp; pengeluaran, laporan pajak.</td></tr>
+    <tr><td class="role-tag">Customer</td><td><span class="kbd">/shop</span></td>
+        <td>Belanja, checkout, bayar, lihat status &amp; nota pesanan sendiri.</td></tr>
+  </table>
+  <div class="note">
+    Setiap staff (Sales, Production, Finance) dibuatkan akun oleh Admin melalui menu
+    <b>Users</b> — bukan mendaftar sendiri. Pendaftaran mandiri di halaman publik selalu
+    menghasilkan akun <i>Customer</i>.
+  </div>
+</section>
+
+<!-- ============================================================ BAB 2 -->
+<section class="chapter" id="bab2">
+  <h2>2. Alur Belanja Pelanggan</h2>
+  <h3>2.1 Ready Stock</h3>
+  <p>Produk dengan stok siap. Dapat langsung dibeli, stok berkurang otomatis begitu pembayaran dikonfirmasi.</p>
+  <h3>2.2 Pre-Order (PO)</h3>
+  <p>Produk dibuat sesuai pesanan pada shift malam. Saat checkout, pelanggan memilih tanggal
+  pengambilan/pengiriman dari kalender yang menampilkan sisa kuota per tanggal — tanggal yang
+  tidak cukup kuotanya otomatis tidak bisa dipilih (lihat Bab 8).</p>
+  <h3>2.3 Checkout &amp; Pembayaran</h3>
+  <ol>
+    <li>Isi/lengkapi data kontak (nama, telepon, alamat) di halaman Akun.</li>
+    <li>Pilih tanggal (khusus item pre-order) dan jam pengambilan.</li>
+    <li>Pesanan dibuat berstatus <b>Belum Bayar (UNPAID)</b> → diarahkan ke halaman pembayaran.</li>
+    <li>Bayar via QRIS atau transfer bank sesuai info di layar, lalu unggah bukti pembayaran.</li>
+    <li>Sales/Admin memverifikasi bukti → status berubah menjadi <b>Lunas (PAID)</b>.</li>
+    <li>Pesanan berjalan: <span class="kbd">PAID → IN_PRODUCTION → READY → COMPLETED</span>.</li>
+  </ol>
+  <p>Riwayat &amp; status pesanan dapat dilihat di menu <b>My Orders</b>; setiap pesanan
+  memiliki tautan <b>🧾 Nota</b> untuk melihat/mencetak nota (Bab 7).</p>
+</section>
+
+<!-- ============================================================ BAB 3 -->
+<section class="chapter" id="bab3">
+  <h2>3. Panduan Admin (Owner)</h2>
+  <h3>3.1 Overview</h3>
+  <p>Ringkasan total pesanan, <b>pendapatan kotor / bersih / pajak terkumpul</b>, jumlah
+  pesanan per status, stok menipis, dan pesanan terbaru.</p>
+  <h3>3.2 Produk &amp; Kategori</h3>
+  <p>Tambah/ubah produk (harga sudah termasuk pajak), tandai Ready Stock vs Pre-Order,
+  atur stok, unggah foto atau tempel link Google Drive (otomatis dikonversi).</p>
+  <h3>3.3 Pesanan</h3>
+  <p>Lihat &amp; ubah status pesanan apa pun secara bebas ("Force status"), ubah tanggal/metode
+  bayar/catatan, hapus pesanan, atau buat <b>pesanan manual</b> untuk pelanggan (dengan opsi
+  langsung tandai Lunas, dan opsi <i>override</i> kuota malam khusus Admin).</p>
+  <h3>3.4 Users</h3>
+  <p>Buat/ubah akun staff, termasuk peran baru <b>Finance</b>. Reset password staff dari sini.</p>
+  <h3>3.5 Settings (Payments)</h3>
+  <p>Atur QRIS &amp; rekening bank, catatan instruksi pembayaran, <b>persentase pajak inklusif</b>
+  (default 11%), dan <b>kuota produksi malam</b> (default 200 pcs/malam).</p>
+</section>
+
+<!-- ============================================================ BAB 4 -->
+<section class="chapter" id="bab4">
+  <h2>4. Panduan Sales</h2>
+  <ul>
+    <li><b>Perlu verifikasi</b> — pesanan yang sudah mengunggah bukti bayar: lihat buktinya,
+        klik <i>Konfirmasi Lunas</i> atau <i>Tolak bukti</i> (pelanggan diminta unggah ulang).</li>
+    <li><b>Belum bayar</b> — tandai lunas manual untuk pembayaran tunai/di tempat, atau batalkan
+        pesanan yang tidak dilanjutkan.</li>
+    <li><b>New Manual Order</b> — untuk pesanan telepon/walk-in atas nama pelanggan yang sudah
+        punya akun. Tunduk pada kuota malam yang sama seperti pelanggan online.</li>
+    <li><b>Cetak nota</b> — setiap kartu/baris pesanan punya tautan <b>🧾 Nota</b>: buka lalu
+        klik <i>Cetak nota</i> untuk mencetak nota fisik ke pelanggan (lihat Bab 7).</li>
+  </ul>
+</section>
+
+<!-- ============================================================ BAB 5 -->
+<section class="chapter" id="bab5">
+  <h2>5. Panduan Kitchen / Production</h2>
+  <p>Papan kanban saat ini menampilkan tiket per pesanan dalam tiga kolom:
+  <span class="kbd">Paid</span> → <span class="kbd">In Production</span> → <span class="kbd">Ready</span>.
+  Status hanya bisa maju satu arah (tidak bisa mundur).</p>
+  <div class="note">
+    <b>Segera hadir:</b> Papan Produksi Malam khusus pre-order — menampilkan
+    <i>total per produk</i> ("Total Sourdough: 50 pcs") sekaligus <i>rincian per pesanan</i>
+    ("Order #101: 10 pcs · Order #105: 40 pcs") per tanggal ambil, untuk mempermudah
+    pengemasan &amp; pelabelan. Lihat status di Bab 10.
+  </div>
+</section>
+
+<!-- ============================================================ BAB 6 -->
+<section class="chapter" id="bab6">
+  <h2>6. Panduan Finance <span class="badge b-done">Fitur Baru</span></h2>
+  <p>Dashboard ini hanya bisa diakses oleh peran <b>Finance</b> dan <b>Admin</b>.</p>
+  <h3>6.1 Recap</h3>
+  <p>Rekap Harian / Mingguan / Bulanan: jumlah pesanan, pendapatan kotor, pendapatan bersih,
+  pajak terkumpul, pengeluaran operasional, modal masuk, <b>Net Cash Flow</b>, dan
+  <b>Operating Result</b> (hasil usaha di luar pajak). Posisi kas keseluruhan (all-time)
+  ditampilkan di atas.</p>
+  <h3>6.2 Cash Flow</h3>
+  <p>Tombol <b>+ Input modal awal</b> membuka form (modal/pop-up) untuk mencatat setoran modal.
+  Di bawahnya ada form <b>Catat pengeluaran</b> (kategori: operasional, bahan baku, kemasan,
+  listrik/air/gas, gaji, sewa, peralatan, marketing, lainnya). Semua entri tercatat dengan
+  nama staff yang menginput dan bisa dihapus bila salah input.</p>
+  <h3>6.3 Reports</h3>
+  <p>Rincian pajak per pesanan (Gross → Net Revenue + Tax) untuk periode yang dipilih,
+  lengkap dengan tombol <b>Export CSV</b> untuk diserahkan ke akuntan/pelaporan pajak.</p>
+</section>
+
+<!-- ============================================================ BAB 7 -->
+<section class="chapter" id="bab7">
+  <h2>7. Nota Digital &amp; Cetak Nota Offline</h2>
+  <p>Setiap pesanan memiliki satu halaman nota (<span class="kbd">/receipt/&lt;id&gt;</span>)
+  yang berisi: nama toko, nomor pesanan, tanggal, status, data pelanggan, rincian item,
+  total bayar beserta keterangan pajak yang sudah termasuk di dalamnya, metode bayar, dan
+  tanggal ambil/antar.</p>
+  <ul>
+    <li><b>Untuk pelanggan online</b> — tautan ini yang nantinya dikirim otomatis lewat
+        WhatsApp sebagai nota digital (lihat Bab 10).</li>
+    <li><b>Untuk transaksi tatap muka/offline</b> — Sales/Admin membuka tautan nota lalu
+        menekan <b>🖨️ Cetak nota</b>; halaman sudah diformat otomatis agar rapi baik di
+        printer thermal (struk 80&nbsp;mm) maupun printer biasa (A4).</li>
+  </ul>
+  <div class="note">
+    Karena tautan nota dibagikan lewat WhatsApp, halaman ini sengaja dibuat
+    <b>bisa dibuka tanpa login</b> (seperti tautan struk digital pada umumnya) — dijaga
+    dengan ID pesanan acak yang tidak bisa ditebak. Halaman ini hanya menampilkan, tidak bisa
+    mengubah data apa pun.
+  </div>
+</section>
+
+<!-- ============================================================ BAB 8 -->
+<section class="chapter" id="bab8">
+  <h2>8. Kuota Produksi Malam (PO Capacity)</h2>
+  <p>
+    Karena produksi pre-order hanya dikerjakan pada shift malam, sistem membatasi
+    <b>total jumlah item pre-order</b> yang boleh dijadwalkan per tanggal ambil/antar
+    (bukan jumlah pesanan/nota) — default 200 pcs/malam, dapat diubah Admin di
+    Settings.
+  </p>
+  <p>Saat checkout, sistem menghitung beban tiap tanggal (30 hari ke depan) dan
+  membandingkannya dengan isi keranjang pelanggan saat itu juga:</p>
+  <ul>
+    <li>Tanggal dengan sisa kuota cukup → bisa dipilih, menampilkan "Sisa N pcs".</li>
+    <li>Tanggal yang kuotanya tidak cukup untuk keranjang tersebut → ditandai
+        <span class="badge b-todo">Penuh</span> dan tidak bisa diklik.</li>
+    <li>Tanggal kurang dari 24 jam ke depan juga otomatis dinonaktifkan.</li>
+  </ul>
+  <p>Aturan ini berlaku sama untuk checkout pelanggan, pesanan manual Sales, maupun
+  pesanan manual Admin — kecuali Admin mencentang opsi <i>override</i> khusus.</p>
+</section>
+
+<!-- ============================================================ BAB 9 -->
+<section class="chapter" id="bab9">
+  <h2>9. Pajak Inklusif pada Laporan Keuangan</h2>
+  <p>
+    Harga di menu <b>sudah termasuk pajak</b> (default 11%) — pelanggan cukup membayar
+    angka yang tertera, tidak ada tambahan biaya di kasir. Pemisahan pajak hanya
+    dilakukan di balik layar, untuk kebutuhan laporan keuangan:
+  </p>
+  <table>
+    <tr><th>Contoh</th><th>Nilai</th></tr>
+    <tr><td>Total dibayar pelanggan (Gross)</td><td>Rp100.000</td></tr>
+    <tr><td>Pendapatan bersih (Net) = Gross ÷ (1 + tarif pajak)</td><td>Rp90.090</td></tr>
+    <tr><td>Pajak terkumpul (Tax) = Gross − Net</td><td>Rp9.910</td></tr>
+  </table>
+  <p>Angka ini muncul otomatis di Overview Admin, dashboard Finance, dan halaman
+  Reports/Export CSV — pemilik tidak perlu menghitung manual.</p>
+</section>
+
+<!-- ============================================================ BAB 10 -->
+<section class="chapter" id="bab10">
+  <h2>10. Status Fitur &amp; Rencana Berikutnya</h2>
+  <table>
+    <tr><th>Fitur</th><th>Status</th><th>Keterangan</th></tr>
+    <tr><td>Peran Finance + dashboard cash flow</td><td><span class="badge b-done">Selesai</span></td><td>Bab 6</td></tr>
+    <tr><td>Pajak inklusif pada laporan</td><td><span class="badge b-done">Selesai</span></td><td>Bab 9</td></tr>
+    <tr><td>Kuota produksi malam (PO)</td><td><span class="badge b-done">Selesai</span></td><td>Bab 8</td></tr>
+    <tr><td>Nota digital + cetak nota offline</td><td><span class="badge b-done">Selesai</span></td><td>Bab 7</td></tr>
+    <tr><td>Papan Produksi Malam (agregat + rincian per pesanan)</td><td><span class="badge b-progress">Berjalan</span></td><td>Menyusul — dijadwalkan langkah berikutnya.</td></tr>
+    <tr><td>Log audit aktivitas (Admin memantau semua akun)</td><td><span class="badge b-progress">Berjalan</span></td><td>Skema &amp; halaman sedang disiapkan.</td></tr>
+    <tr><td>Notifikasi/nota via WhatsApp otomatis</td><td><span class="badge b-progress">Berjalan</span></td><td>Perlu akun WhatsApp Business API resmi (Meta) — lihat catatan di bawah.</td></tr>
+    <tr><td>Halaman lacak pesanan pelanggan (timeline, batal pesanan)</td><td><span class="badge b-todo">Belum ada</span></td><td>Lihat Bab 11.</td></tr>
+    <tr><td>Halaman edit profil pelanggan (<span class="kbd">/account</span>)</td><td><span class="badge b-todo">Belum ada</span></td><td>Lihat Bab 11.</td></tr>
+  </table>
+  <div class="warn">
+    <b>Catatan penting untuk WhatsApp:</b> Meta mewajibkan pesan yang dikirim otomatis oleh
+    bisnis (di luar jendela 24 jam sejak pelanggan terakhir chat) menggunakan
+    <i>template pesan</i> yang harus diajukan &amp; disetujui lebih dulu di Meta Business
+    Manager. Pemilik perlu menyiapkan akun WhatsApp Business terverifikasi sebelum fitur
+    ini bisa aktif sepenuhnya.
+  </div>
+</section>
+
+<!-- ============================================================ BAB 11 -->
+<section class="chapter" id="bab11">
+  <h2>11. Pendapat: Efisiensi &amp; Kekurangan Sistem</h2>
+
+  <h3>11.1 Temuan yang perlu tindakan segera</h3>
+  <div class="warn">
+    <b>Migrasi database terbaru belum diterapkan ke server produksi.</b> Kode aplikasi
+    (Finance, pajak, kuota malam) sudah mengasumsikan tabel/kolom baru
+    (<span class="kbd">capital_entries</span>, <span class="kbd">expenses</span>,
+    <span class="kbd">store_settings.tax_rate</span>,
+    <span class="kbd">store_settings.daily_po_item_capacity</span>, peran
+    <span class="kbd">FINANCE</span>, dll.) yang <b>belum ada</b> di database yang sedang
+    berjalan. Sebelum fitur-fitur ini dipakai, jalankan <span class="kbd">npm run db:push</span>
+    (sudah dicek: 0 pesanan tersimpan saat ini, jadi aman dijalankan kapan saja).
+  </div>
+
+  <h3>11.2 Celah fungsional yang ditemukan</h3>
+  <ul>
+    <li><b>Halaman lacak pesanan pelanggan</b> (<span class="kbd">/orders/[id]</span>) belum
+        pernah dibuat — sebelumnya ini membuat setiap klik pesanan di "My Orders" gagal
+        (404). Untuk sementara sudah diarahkan ke halaman nota/pembayaran yang relevan,
+        namun pelanggan masih belum bisa membatalkan pesanan miliknya sendiri lewat UI
+        (aksi backend-nya sudah ada, tinggal dibuatkan halamannya).</li>
+    <li><b>Halaman edit profil</b> (<span class="kbd">/account</span>) juga belum dibuat —
+        tautan "Edit details" di checkout saat ini mengarah ke halaman yang belum ada.</li>
+    <li>Tidak ada halaman <span class="kbd">not-found</span> khusus (404 memakai bawaan Next.js).</li>
+  </ul>
+
+  <h3>11.3 Saran efisiensi</h3>
+  <ul>
+    <li><b>Kurangi <span class="kbd">force-dynamic</span>.</b> Banyak halaman (katalog,
+        dashboard) selalu di-render ulang di server setiap kunjungan. Untuk data yang jarang
+        berubah (katalog produk, pengaturan toko) pertimbangkan ISR/tag-based revalidation
+        agar lebih cepat dan hemat biaya hosting.</li>
+    <li><b>Update real-time untuk papan Kitchen &amp; Sales.</b> Saat ini staf harus me-refresh
+        manual. Supabase Realtime bisa dipakai agar papan otomatis update saat ada pesanan baru.</li>
+    <li><b>Indeks tambahan seiring data bertambah</b> — terutama pada kolom yang dipakai
+        laporan Finance (tanggal pembayaran) dan pencarian pesanan, begitu volume transaksi
+        naik signifikan.</li>
+    <li><b>Konsolidasi komponen kartu statistik</b> yang saat ini diulang di beberapa halaman
+        (Overview, Finance Recap, Cash Flow, Reports) menjadi satu komponen bersama — memudahkan
+        perawatan tampilan ke depannya.</li>
+    <li><b>Backup &amp; pemulihan.</b> Pastikan Point-in-Time Recovery aktif di Supabase,
+        mengingat data keuangan (modal, pengeluaran) kini tersimpan di sistem ini.</li>
+  </ul>
+
+  <h3>11.4 Kekurangan lain yang layak dipertimbangkan</h3>
+  <ul class="cols2">
+    <li>Belum ada log audit aktivitas staff (sedang disiapkan).</li>
+    <li>Belum ada notifikasi otomatis ke pelanggan (WhatsApp — sedang disiapkan).</li>
+    <li>Belum ada paginasi di daftar pesanan/produk skala besar.</li>
+    <li>Belum ada pencarian/filter lanjutan di daftar user.</li>
+    <li>Belum ada automated testing (unit/e2e).</li>
+    <li>Belum ada pembatasan percobaan login (rate limiting) untuk keamanan tambahan.</li>
+  </ul>
+</section>
+
+<!-- ============================================================ BAB 12 -->
+<section class="chapter" id="bab12">
+  <h2>12. Lampiran Teknis Singkat</h2>
+  <table>
+    <tr><th>Perintah</th><th>Kegunaan</th></tr>
+    <tr><td class="kbd">npm run dev</td><td>Menjalankan aplikasi secara lokal</td></tr>
+    <tr><td class="kbd">npm run build</td><td>Build produksi (dipakai sebelum deploy)</td></tr>
+    <tr><td class="kbd">npm run db:push</td><td>Menerapkan migrasi SQL terbaru ke database</td></tr>
+    <tr><td class="kbd">npm run db:seed</td><td>Migrasi + data contoh awal</td></tr>
+    <tr><td class="kbd">npm run user:create</td><td>Membuat/menaikkan akun jadi Admin pertama</td></tr>
+  </table>
+  <p class="footnote">
+    Dokumen ini dihasilkan otomatis berdasarkan kondisi kode &amp; database per 11 September 2026.
+    Perbarui dokumen ini setiap kali ada penambahan fitur besar.
+  </p>
+</section>
+
+</body>
+</html>

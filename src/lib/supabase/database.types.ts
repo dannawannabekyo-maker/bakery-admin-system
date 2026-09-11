@@ -10,7 +10,12 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[];
 
-export type UserRole = "ADMIN" | "SALES" | "PRODUCTION" | "CUSTOMER";
+export type UserRole =
+  | "ADMIN"
+  | "SALES"
+  | "PRODUCTION"
+  | "FINANCE"
+  | "CUSTOMER";
 export type OrderTypeEnum = "READY_STOCK" | "PRE_ORDER";
 export type OrderStatusEnum =
   | "UNPAID"
@@ -109,6 +114,7 @@ export interface Database {
           payment_method: string | null;
           payment_receipt_url: string | null;
           payment_submitted_at: string | null;
+          paid_at: string | null;
           admin_notes: string | null;
           created_at: string;
           updated_at: string;
@@ -125,6 +131,7 @@ export interface Database {
           payment_method?: string | null;
           payment_receipt_url?: string | null;
           payment_submitted_at?: string | null;
+          paid_at?: string | null;
           admin_notes?: string | null;
           created_at?: string;
           updated_at?: string;
@@ -154,6 +161,8 @@ export interface Database {
           bank_account_number: string | null;
           bank_account_holder: string | null;
           payment_note: string | null;
+          tax_rate: number;
+          daily_po_item_capacity: number;
           updated_at: string;
         };
         Insert: {
@@ -164,12 +173,107 @@ export interface Database {
           bank_account_number?: string | null;
           bank_account_holder?: string | null;
           payment_note?: string | null;
+          tax_rate?: number;
+          daily_po_item_capacity?: number;
           updated_at?: string;
         };
         Update: Partial<
           Database["public"]["Tables"]["store_settings"]["Insert"]
         >;
         Relationships: [];
+      };
+      capital_entries: {
+        Row: {
+          id: string;
+          amount: number;
+          entry_date: string;
+          note: string | null;
+          created_by: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          amount: number;
+          entry_date?: string;
+          note?: string | null;
+          created_by: string;
+          created_at?: string;
+        };
+        Update: Partial<
+          Database["public"]["Tables"]["capital_entries"]["Insert"]
+        >;
+        Relationships: [
+          {
+            foreignKeyName: "capital_entries_created_by_fkey";
+            columns: ["created_by"];
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      audit_log: {
+        Row: {
+          id: string;
+          actor_id: string | null;
+          actor_name: string | null;
+          actor_role: UserRole | null;
+          action: string;
+          entity_type: string;
+          entity_id: string | null;
+          summary: string;
+          metadata: Json | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          actor_id?: string | null;
+          actor_name?: string | null;
+          actor_role?: UserRole | null;
+          action: string;
+          entity_type: string;
+          entity_id?: string | null;
+          summary: string;
+          metadata?: Json | null;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["audit_log"]["Insert"]>;
+        Relationships: [
+          {
+            foreignKeyName: "audit_log_actor_id_fkey";
+            columns: ["actor_id"];
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      expenses: {
+        Row: {
+          id: string;
+          amount: number;
+          category: string;
+          note: string | null;
+          spent_at: string;
+          created_by: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          amount: number;
+          category?: string;
+          note?: string | null;
+          spent_at?: string;
+          created_by: string;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["expenses"]["Insert"]>;
+        Relationships: [
+          {
+            foreignKeyName: "expenses_created_by_fkey";
+            columns: ["created_by"];
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       order_items: {
         Row: {
@@ -205,7 +309,25 @@ export interface Database {
         ];
       };
     };
-    Views: Record<string, never>;
+    Views: {
+      finance_orders: {
+        Row: {
+          id: string;
+          order_number: string;
+          status: OrderStatusEnum;
+          order_type: OrderTypeEnum;
+          customer_id: string;
+          created_at: string;
+          pickup_or_delivery_date: string | null;
+          recognised_at: string;
+          gross_amount: number;
+          net_amount: number;
+          tax_amount: number;
+          tax_rate: number;
+        };
+        Relationships: [];
+      };
+    };
     Functions: {
       current_user_role: {
         Args: Record<string, never>;
@@ -215,9 +337,29 @@ export interface Database {
         Args: Record<string, never>;
         Returns: boolean;
       };
+      is_finance: {
+        Args: Record<string, never>;
+        Returns: boolean;
+      };
+      can_view_finance: {
+        Args: Record<string, never>;
+        Returns: boolean;
+      };
       recalc_order_total: {
         Args: { p_order_id: string };
         Returns: number;
+      };
+      po_items_committed_on: {
+        Args: { target: string };
+        Returns: number;
+      };
+      po_capacity_for: {
+        Args: { target: string };
+        Returns: {
+          capacity: number;
+          committed: number;
+          remaining: number;
+        }[];
       };
     };
     Enums: {
@@ -237,3 +379,9 @@ export type OrderRow = Database["public"]["Tables"]["orders"]["Row"];
 export type OrderItemRow = Database["public"]["Tables"]["order_items"]["Row"];
 export type StoreSettingsRow =
   Database["public"]["Tables"]["store_settings"]["Row"];
+export type CapitalEntryRow =
+  Database["public"]["Tables"]["capital_entries"]["Row"];
+export type ExpenseRow = Database["public"]["Tables"]["expenses"]["Row"];
+export type FinanceOrderRow =
+  Database["public"]["Views"]["finance_orders"]["Row"];
+export type AuditLogRow = Database["public"]["Tables"]["audit_log"]["Row"];

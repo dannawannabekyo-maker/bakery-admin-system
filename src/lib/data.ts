@@ -11,7 +11,11 @@ import type {
   ProfileRow,
   StoreSettingsRow,
 } from "@/lib/supabase/database.types";
-import { STORAGE_BUCKETS } from "@/lib/constants";
+import {
+  STORAGE_BUCKETS,
+  DEFAULT_TAX_RATE,
+  DEFAULT_DAILY_PO_ITEM_CAPACITY,
+} from "@/lib/constants";
 
 export type ProductWithCategory = ProductRow & {
   category: Pick<CategoryRow, "id" | "name" | "slug"> | null;
@@ -49,6 +53,42 @@ export async function getProductById(id: string) {
     .from("products")
     .select("*, category:categories(id,name,slug)")
     .eq("id", id)
+    .maybeSingle();
+  return data as ProductWithCategory | null;
+}
+
+/**
+ * PUBLIC, cookie-free catalog reads for the customer-facing shop pages only.
+ * `getActiveCatalog`/`getProductById` above go through the RLS (cookie) client,
+ * which makes Next.js treat the page as dynamic on every request even though
+ * the result never depends on who's asking. These use the service-role client
+ * but are hand-restricted to `is_active = true` — the exact same rows an
+ * anonymous visitor could already see — so the calling page can be cached
+ * (ISR) instead of forced dynamic. Never use these outside the public shop.
+ */
+export async function getPublicCatalog() {
+  const admin = createAdminClient();
+  const [{ data: categories }, { data: products }] = await Promise.all([
+    admin.from("categories").select("*").order("name"),
+    admin
+      .from("products")
+      .select("*, category:categories(id,name,slug)")
+      .eq("is_active", true)
+      .order("name"),
+  ]);
+  return {
+    categories: (categories ?? []) as CategoryRow[],
+    products: (products ?? []) as ProductWithCategory[],
+  };
+}
+
+export async function getPublicProductById(id: string) {
+  const admin = createAdminClient();
+  const { data } = await admin
+    .from("products")
+    .select("*, category:categories(id,name,slug)")
+    .eq("id", id)
+    .eq("is_active", true)
     .maybeSingle();
   return data as ProductWithCategory | null;
 }
@@ -146,6 +186,8 @@ export async function getStoreSettings(): Promise<StoreSettingsRow> {
       bank_account_number: null,
       bank_account_holder: null,
       payment_note: null,
+      tax_rate: DEFAULT_TAX_RATE,
+      daily_po_item_capacity: DEFAULT_DAILY_PO_ITEM_CAPACITY,
       updated_at: new Date(0).toISOString(),
     }
   );

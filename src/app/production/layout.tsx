@@ -1,7 +1,11 @@
 import { requireRole } from "@/lib/auth";
 import { DashboardShell } from "@/components/dashboard-shell";
+import { RealtimeOrdersRefresh } from "@/components/realtime-orders-refresh";
 
-const NAV = [{ href: "/production", label: "Production Board" }];
+const NAV = [
+  { href: "/production", label: "Production Board" },
+  { href: "/production/night", label: "Night Production" },
+];
 
 export default async function ProductionLayout({
   children,
@@ -16,6 +20,7 @@ export default async function ProductionLayout({
       userName={profile.full_name || "Kitchen"}
       nav={NAV}
     >
+      <RealtimeOrdersRefresh />
       {children}
     </DashboardShell>
   );

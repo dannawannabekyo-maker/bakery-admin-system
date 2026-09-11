@@ -1,13 +1,17 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { getProductById } from "@/lib/data";
+import { getPublicProductById } from "@/lib/data";
 import { formatCurrency } from "@/lib/format";
 import { productImageSrc } from "@/lib/images";
 import { Badge } from "@/components/ui";
 import { AddToCart } from "@/components/cart/add-to-cart";
 
-export const dynamic = "force-dynamic";
+// ISR instead of force-dynamic: product edits already call revalidatePath()
+// for instant invalidation; this 60s cap is just a safety net (e.g. stock
+// count can lag up to a minute — checkout re-validates stock server-side
+// regardless, so this never risks overselling).
+export const revalidate = 60;
 
 export default async function ProductPage({
   params,
@@ -15,7 +19,7 @@ export default async function ProductPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const product = await getProductById(id);
+  const product = await getPublicProductById(id);
   if (!product || !product.is_active) notFound();
 
   const soldOut = !product.is_preorder && product.stock <= 0;

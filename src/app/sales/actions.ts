@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { assertRole } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { createOrder } from "@/lib/orders-server";
+import { logAudit } from "@/lib/audit";
 import { fail, ok, type ActionResult } from "@/lib/action-result";
 
 function revalidateSales() {
@@ -15,7 +16,7 @@ export async function salesCreateManualOrder(
   _prev: ActionResult | null,
   formData: FormData,
 ): Promise<ActionResult> {
-  const { userId } = await assertRole(["SALES", "ADMIN"]);
+  const { userId, profile } = await assertRole(["SALES", "ADMIN"]);
 
   const customerId = String(formData.get("customer_id") ?? "");
   if (!customerId) return fail("Choose a customer.");
@@ -52,11 +53,20 @@ export async function salesCreateManualOrder(
   }
 
   revalidateSales();
+  await logAudit({
+    actorId: userId,
+    actorName: profile.full_name,
+    actorRole: profile.role,
+    action: "ORDER_MANUAL_CREATE",
+    entityType: "order",
+    entityId: res.orderId,
+    summary: `${profile.full_name || "Sales"} created manual order ${res.orderNumber}`,
+  });
   return ok(`Order ${res.orderNumber} created.`, `/sales`);
 }
 
 export async function salesMarkPaid(formData: FormData): Promise<ActionResult> {
-  await assertRole(["SALES", "ADMIN"]);
+  const { userId, profile } = await assertRole(["SALES", "ADMIN"]);
   const supabase = await createClient();
   const id = String(formData.get("id"));
 
@@ -65,9 +75,23 @@ export async function salesMarkPaid(formData: FormData): Promise<ActionResult> {
   const patch: { status: "PAID"; payment_method?: string } = { status: "PAID" };
   if (method) patch.payment_method = method;
 
-  const { error } = await supabase.from("orders").update(patch).eq("id", id);
+  const { data: updated, error } = await supabase
+    .from("orders")
+    .update(patch)
+    .eq("id", id)
+    .select("order_number")
+    .maybeSingle();
   if (error) return fail(error.message);
   revalidateSales();
+  await logAudit({
+    actorId: userId,
+    actorName: profile.full_name,
+    actorRole: profile.role,
+    action: "ORDER_MARK_PAID",
+    entityType: "order",
+    entityId: id,
+    summary: `${profile.full_name || "Sales"} marked order ${updated?.order_number ?? id} as PAID`,
+  });
   return ok("Order ditandai lunas.");
 }
 
@@ -75,29 +99,53 @@ export async function salesMarkPaid(formData: FormData): Promise<ActionResult> {
 export async function salesRejectPayment(
   formData: FormData,
 ): Promise<ActionResult> {
-  await assertRole(["SALES", "ADMIN"]);
+  const { userId, profile } = await assertRole(["SALES", "ADMIN"]);
   const supabase = await createClient();
-  const { error } = await supabase
+  const id = String(formData.get("id"));
+  const { data: updated, error } = await supabase
     .from("orders")
     .update({
       payment_submitted_at: null,
       payment_receipt_url: null,
       payment_method: null,
     })
-    .eq("id", String(formData.get("id")));
+    .eq("id", id)
+    .select("order_number")
+    .maybeSingle();
   if (error) return fail(error.message);
   revalidateSales();
+  await logAudit({
+    actorId: userId,
+    actorName: profile.full_name,
+    actorRole: profile.role,
+    action: "PAYMENT_PROOF_REJECT",
+    entityType: "order",
+    entityId: id,
+    summary: `${profile.full_name || "Sales"} rejected payment proof for order ${updated?.order_number ?? id}`,
+  });
   return ok("Bukti pembayaran ditolak.");
 }
 
 export async function salesCancelOrder(formData: FormData): Promise<ActionResult> {
-  await assertRole(["SALES", "ADMIN"]);
+  const { userId, profile } = await assertRole(["SALES", "ADMIN"]);
   const supabase = await createClient();
-  const { error } = await supabase
+  const id = String(formData.get("id"));
+  const { data: updated, error } = await supabase
     .from("orders")
     .update({ status: "CANCELLED" })
-    .eq("id", String(formData.get("id")));
+    .eq("id", id)
+    .select("order_number")
+    .maybeSingle();
   if (error) return fail(error.message);
   revalidateSales();
+  await logAudit({
+    actorId: userId,
+    actorName: profile.full_name,
+    actorRole: profile.role,
+    action: "ORDER_CANCEL",
+    entityType: "order",
+    entityId: id,
+    summary: `${profile.full_name || "Sales"} cancelled order ${updated?.order_number ?? id}`,
+  });
   return ok("Order cancelled.");
 }

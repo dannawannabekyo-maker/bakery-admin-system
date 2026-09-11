@@ -7,7 +7,11 @@ const PROTECTED: { prefix: string; roles: string[] }[] = [
   { prefix: "/admin", roles: ["ADMIN"] },
   { prefix: "/sales", roles: ["ADMIN", "SALES"] },
   { prefix: "/production", roles: ["ADMIN", "PRODUCTION"] },
-  { prefix: "/account", roles: ["ADMIN", "SALES", "PRODUCTION", "CUSTOMER"] },
+  { prefix: "/finance", roles: ["ADMIN", "FINANCE"] },
+  {
+    prefix: "/account",
+    roles: ["ADMIN", "SALES", "PRODUCTION", "FINANCE", "CUSTOMER"],
+  },
   { prefix: "/checkout", roles: ["CUSTOMER", "ADMIN"] },
   { prefix: "/orders", roles: ["CUSTOMER", "ADMIN", "SALES"] },
 ];
@@ -16,6 +20,7 @@ const ROLE_HOME: Record<string, string> = {
   ADMIN: "/admin",
   SALES: "/sales",
   PRODUCTION: "/production",
+  FINANCE: "/finance",
   CUSTOMER: "/shop",
 };
 

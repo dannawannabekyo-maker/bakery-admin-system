@@ -9,6 +9,12 @@ const NAV = [
   { href: "/admin/categories", label: "Categories" },
   { href: "/admin/users", label: "Users" },
   { href: "/admin/settings", label: "Payments" },
+  { href: "/admin/activity", label: "Activity Log" },
+  // God Mode should reach every other dashboard in one click — these were
+  // never linked from here before, so Admin had no visible way to open them.
+  { href: "/finance", label: "Finance" },
+  { href: "/sales", label: "Sales Desk" },
+  { href: "/production", label: "Kitchen Board" },
 ];
 
 export default async function AdminLayout({

@@ -111,6 +111,45 @@ export function Card({
 }
 
 /* -------------------------------------------------------------------------- */
+/* StatCard — one small metric tile (used across Admin/Finance dashboards)    */
+/* -------------------------------------------------------------------------- */
+export function StatCard({
+  label,
+  value,
+  hint,
+  tone,
+  size = "md",
+}: {
+  label: string;
+  value: string;
+  hint?: string;
+  tone?: "pos" | "neg" | "muted";
+  size?: "sm" | "md" | "lg";
+}) {
+  const sizeClass = {
+    sm: "mt-1 text-base font-semibold",
+    md: "mt-1 text-lg font-semibold",
+    lg: "mt-1 text-xl font-bold",
+  }[size];
+  const toneClass =
+    tone === "pos"
+      ? "text-green-700 dark:text-green-400"
+      : tone === "neg"
+        ? "text-red-600 dark:text-red-400"
+        : tone === "muted"
+          ? "text-foreground/70"
+          : "";
+
+  return (
+    <Card>
+      <p className="text-xs uppercase tracking-wide text-foreground/60">{label}</p>
+      <p className={cn(sizeClass, toneClass)}>{value}</p>
+      {hint && <p className="mt-0.5 text-xs text-foreground/50">{hint}</p>}
+    </Card>
+  );
+}
+
+/* -------------------------------------------------------------------------- */
 /* Badge / StatusBadge                                                         */
 /* -------------------------------------------------------------------------- */
 export function Badge({

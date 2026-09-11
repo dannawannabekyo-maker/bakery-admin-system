@@ -1,5 +1,6 @@
 import { requireRole } from "@/lib/auth";
 import { DashboardShell } from "@/components/dashboard-shell";
+import { RealtimeOrdersRefresh } from "@/components/realtime-orders-refresh";
 
 const NAV = [
   { href: "/sales", label: "Incoming Orders" },
@@ -19,6 +20,7 @@ export default async function SalesLayout({
       userName={profile.full_name || "Sales"}
       nav={NAV}
     >
+      <RealtimeOrdersRefresh />
       {children}
     </DashboardShell>
   );

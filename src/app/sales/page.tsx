@@ -5,6 +5,7 @@ import { formatCurrency, formatDateTime } from "@/lib/format";
 import { Card, StatusBadge, Badge, EmptyState } from "@/components/ui";
 import { ConfirmButton, SubmitButton } from "@/components/form";
 import { PageHeader } from "@/components/dashboard-shell";
+import { ReceiptLink } from "@/components/receipt-link";
 import { asFormAction } from "@/lib/action-result";
 import { PAYMENT_METHOD_LABEL, type PaymentMethod } from "@/lib/constants";
 import { salesMarkPaid, salesCancelOrder, salesRejectPayment } from "./actions";
@@ -192,6 +193,7 @@ function OrderHead({ o }: { o: OrderWithRelations }) {
           </Badge>
         )}
         <StatusBadge status={o.status} />
+        <ReceiptLink orderId={o.id} />
       </div>
     </div>
   );
@@ -226,6 +228,9 @@ function OrdersTable({
                 {formatCurrency(o.total_amount)}
               </span>
             </div>
+            <div className="flex justify-end">
+              <ReceiptLink orderId={o.id} />
+            </div>
           </Card>
         ))}
       </div>
@@ -240,6 +245,7 @@ function OrdersTable({
               <th className="p-3">Fulfil</th>
               <th className="p-3">Total</th>
               <th className="p-3">Status</th>
+              <th className="p-3" />
             </tr>
           </thead>
           <tbody>
@@ -255,6 +261,9 @@ function OrdersTable({
                 <td className="p-3">{formatCurrency(o.total_amount)}</td>
                 <td className="p-3">
                   <StatusBadge status={o.status} />
+                </td>
+                <td className="p-3 text-right">
+                  <ReceiptLink orderId={o.id} />
                 </td>
               </tr>
             ))}
