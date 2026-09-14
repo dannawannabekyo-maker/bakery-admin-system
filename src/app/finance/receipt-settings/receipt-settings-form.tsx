@@ -3,7 +3,7 @@
 import { useActionState } from "react";
 
 import { saveReceiptSettings } from "../actions";
-import { Card } from "@/components/ui";
+import { Card, Field, Input } from "@/components/ui";
 import { SubmitButton, Feedback } from "@/components/form";
 import type { StoreSettingsRow } from "@/lib/supabase/database.types";
 
@@ -17,6 +17,37 @@ export function ReceiptSettingsForm({
   return (
     <form action={action} className="space-y-4">
       <Feedback state={state} />
+
+      <Card className="space-y-3">
+        <h2 className="font-semibold">Receipt logo</h2>
+        {settings.receipt_logo_url ? (
+          <div className="space-y-1">
+            <p className="text-xs text-foreground/60">Current uploaded logo</p>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={settings.receipt_logo_url}
+              alt="Current receipt logo"
+              className="h-24 w-24 rounded-lg border border-border object-contain bg-white"
+            />
+          </div>
+        ) : (
+          <p className="text-sm text-foreground/60">
+            No logo uploaded yet — using the default placeholder (/logo.svg).
+          </p>
+        )}
+        <Field
+          label="Upload new logo"
+          hint="PNG/JPG, max 5 MB. Leave empty to keep the current one."
+        >
+          <Input type="file" name="receipt_logo" accept="image/*" />
+        </Field>
+        {settings.receipt_logo_url && (
+          <label className="flex items-center gap-2 text-sm">
+            <input type="checkbox" name="remove_receipt_logo" />
+            Remove uploaded logo (revert to the default placeholder)
+          </label>
+        )}
+      </Card>
 
       <Card className="space-y-3">
         <h2 className="font-semibold">PDF &amp; WhatsApp receipt content</h2>

@@ -166,6 +166,7 @@ export interface Database {
           show_tax_on_receipt: boolean;
           show_logo_on_receipt: boolean;
           show_po_instructions: boolean;
+          receipt_logo_url: string | null;
           updated_at: string;
         };
         Insert: {
@@ -181,6 +182,7 @@ export interface Database {
           show_tax_on_receipt?: boolean;
           show_logo_on_receipt?: boolean;
           show_po_instructions?: boolean;
+          receipt_logo_url?: string | null;
           updated_at?: string;
         };
         Update: Partial<

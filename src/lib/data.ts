@@ -191,6 +191,7 @@ export async function getStoreSettings(): Promise<StoreSettingsRow> {
       show_tax_on_receipt: true,
       show_logo_on_receipt: true,
       show_po_instructions: true,
+      receipt_logo_url: null,
       updated_at: new Date(0).toISOString(),
     }
   );

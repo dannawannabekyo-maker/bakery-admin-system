@@ -17,6 +17,8 @@ export type ReceiptSettings = {
   showLogo: boolean;
   showPoInstructions: boolean;
   taxRate: number;
+  /** Admin-uploaded receipt logo (from Receipt Settings). Null -> fall back to /logo.svg. */
+  logoUrl: string | null;
 };
 
 /** "0812..." / "+62 812..." / "62812..." -> "62812..." (digits only, wa.me format). */
@@ -35,23 +37,50 @@ function paymentLabelFor(order: OrderWithRelations): string {
     : "Belum ditentukan";
 }
 
-/** Renders /logo.svg to a PNG data URL via an offscreen canvas. Null if it can't load. */
-async function loadLogoDataUrl(): Promise<string | null> {
+function blobToDataUrl(blob: Blob): Promise<string | null> {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(typeof reader.result === "string" ? reader.result : null);
+    reader.onerror = () => resolve(null);
+    reader.readAsDataURL(blob);
+  });
+}
+
+/** Rasterizes an SVG (same-origin default, or an uploaded one) to a PNG data URL, centred/contained in a square canvas. */
+async function rasterizeSvg(url: string): Promise<string | null> {
+  const img = new Image();
+  img.crossOrigin = "anonymous";
+  img.src = url;
+  await new Promise<void>((resolve, reject) => {
+    img.onload = () => resolve();
+    img.onerror = () => reject(new Error("logo failed to load"));
+  });
+  const size = 300;
+  const canvas = document.createElement("canvas");
+  canvas.width = size;
+  canvas.height = size;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return null;
+  const iw = img.naturalWidth || size;
+  const ih = img.naturalHeight || size;
+  const scale = Math.min(size / iw, size / ih);
+  const w = iw * scale;
+  const h = ih * scale;
+  ctx.drawImage(img, (size - w) / 2, (size - h) / 2, w, h);
+  return canvas.toDataURL("image/png");
+}
+
+/**
+ * Loads the receipt logo (an admin-uploaded PNG/JPG, or the default /logo.svg)
+ * as a data URL jsPDF can embed. Null if it can't be loaded — the PDF simply
+ * skips the image rather than failing the whole receipt.
+ */
+async function loadLogoDataUrl(url: string): Promise<string | null> {
   try {
-    const img = new Image();
-    img.src = "/logo.svg";
-    await new Promise<void>((resolve, reject) => {
-      img.onload = () => resolve();
-      img.onerror = () => reject(new Error("logo not found"));
-    });
-    const size = 200;
-    const canvas = document.createElement("canvas");
-    canvas.width = size;
-    canvas.height = size;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return null;
-    ctx.drawImage(img, 0, 0, size, size);
-    return canvas.toDataURL("image/png");
+    if (/\.svg(\?|$)/i.test(url)) return await rasterizeSvg(url);
+    const res = await fetch(url);
+    if (!res.ok) return null;
+    return await blobToDataUrl(await res.blob());
   } catch {
     return null;
   }
@@ -126,10 +155,11 @@ export async function buildReceiptPdf(
   let y = 8;
 
   if (settings.showLogo) {
-    const logo = await loadLogoDataUrl();
+    const logo = await loadLogoDataUrl(settings.logoUrl || "/logo.svg");
     if (logo) {
       const logoSize = 18;
-      doc.addImage(logo, "PNG", (width - logoSize) / 2, y, logoSize, logoSize);
+      // Format-less overload: jsPDF auto-detects PNG/JPEG/WEBP from the data URL header.
+      doc.addImage(logo, (width - logoSize) / 2, y, logoSize, logoSize);
       y += logoSize + 3;
     }
   }
