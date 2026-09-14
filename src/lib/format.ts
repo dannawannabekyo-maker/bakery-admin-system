@@ -29,6 +29,12 @@ export function formatDateTime(value: string | Date | null | undefined): string 
   }).format(d);
 }
 
+export function formatTime(value: string | Date | null | undefined): string {
+  if (!value) return "—";
+  const d = typeof value === "string" ? new Date(value) : value;
+  return new Intl.DateTimeFormat(LOCALE, { timeStyle: "short" }).format(d);
+}
+
 /** yyyy-mm-dd for <input type="date"> min attributes. */
 export function isoDate(d: Date): string {
   return d.toISOString().slice(0, 10);

@@ -5,6 +5,7 @@ const NAV = [
   { href: "/finance", label: "Recap" },
   { href: "/finance/cash-flow", label: "Cash Flow" },
   { href: "/finance/reports", label: "Reports" },
+  { href: "/finance/receipt-settings", label: "Receipt Settings" },
 ];
 
 export default async function FinanceLayout({

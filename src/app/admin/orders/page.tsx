@@ -5,6 +5,7 @@ import { formatCurrency, formatDateTime } from "@/lib/format";
 import { ORDER_STATUSES } from "@/lib/constants";
 import { Card, StatusBadge, Badge } from "@/components/ui";
 import { PageHeader } from "@/components/dashboard-shell";
+import { GenerateReceiptButton } from "./generate-receipt-button";
 
 export const metadata = { title: "Orders" };
 export const dynamic = "force-dynamic";
@@ -56,8 +57,8 @@ export default async function AdminOrdersPage({
       {/* Mobile: cards */}
       <div className="space-y-2 md:hidden">
         {orders.map((o) => (
-          <Link key={o.id} href={`/admin/orders/${o.id}`} className="block">
-            <Card className="space-y-1 text-sm hover:border-primary">
+          <Card key={o.id} className="space-y-2 text-sm hover:border-primary">
+            <Link href={`/admin/orders/${o.id}`} className="block space-y-1">
               <div className="flex items-center justify-between">
                 <span className="font-medium">{o.order_number}</span>
                 <StatusBadge status={o.status} />
@@ -77,8 +78,9 @@ export default async function AdminOrdersPage({
                   {formatCurrency(o.total_amount)}
                 </span>
               </div>
-            </Card>
-          </Link>
+            </Link>
+            <GenerateReceiptButton order={o} />
+          </Card>
         ))}
       </div>
 
@@ -94,6 +96,7 @@ export default async function AdminOrdersPage({
               <th className="p-3">Fulfil</th>
               <th className="p-3">Total</th>
               <th className="p-3">Status</th>
+              <th className="p-3">Receipt</th>
             </tr>
           </thead>
           <tbody>
@@ -130,6 +133,9 @@ export default async function AdminOrdersPage({
                 <td className="p-3">{formatCurrency(o.total_amount)}</td>
                 <td className="p-3">
                   <StatusBadge status={o.status} />
+                </td>
+                <td className="p-3">
+                  <GenerateReceiptButton order={o} />
                 </td>
               </tr>
             ))}

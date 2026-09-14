@@ -4,10 +4,12 @@ import { revalidatePath } from "next/cache";
 
 import { assertRole } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { logAudit } from "@/lib/audit";
 import { fail, ok, type ActionResult } from "@/lib/action-result";
 import { formatCurrency } from "@/lib/format";
 import { EXPENSE_CATEGORIES } from "@/lib/constants";
+import { getStoreSettings } from "@/lib/data";
 
 function revalidateFinance() {
   revalidatePath("/finance", "layout");
@@ -146,4 +148,62 @@ export async function deleteExpense(formData: FormData): Promise<ActionResult> {
     summary: `${profile.full_name || "Finance"} deleted an expense of ${formatCurrency(deleted?.amount ?? 0)}`,
   });
   return ok("Pengeluaran dihapus.");
+}
+
+/* ============================ RECEIPT SETTINGS ============================ */
+/**
+ * Global on/off toggles for the client-generated PDF/WhatsApp nota. These
+ * are the only thing persisted here — the receipt itself is never saved to
+ * the database or storage, only produced on-device at click time.
+ */
+
+export type ReceiptToggleSettings = {
+  showTax: boolean;
+  showLogo: boolean;
+  showPoInstructions: boolean;
+  taxRate: number;
+};
+
+/** Read by the one-click "Generate PDF & Send WA" button right before it renders the receipt. */
+export async function getReceiptToggleSettings(): Promise<ReceiptToggleSettings> {
+  await assertRole(["FINANCE", "ADMIN"]);
+  const settings = await getStoreSettings();
+  return {
+    showTax: settings.show_tax_on_receipt,
+    showLogo: settings.show_logo_on_receipt,
+    showPoInstructions: settings.show_po_instructions,
+    taxRate: settings.tax_rate,
+  };
+}
+
+export async function saveReceiptSettings(
+  _prev: ActionResult | null,
+  formData: FormData,
+): Promise<ActionResult> {
+  const { userId, profile } = await assertRole(["FINANCE", "ADMIN"]);
+  const admin = createAdminClient();
+
+  const patch = {
+    show_tax_on_receipt: formData.get("show_tax_on_receipt") === "on",
+    show_logo_on_receipt: formData.get("show_logo_on_receipt") === "on",
+    show_po_instructions: formData.get("show_po_instructions") === "on",
+  };
+
+  const { error } = await admin
+    .from("store_settings")
+    .update(patch)
+    .eq("id", 1);
+  if (error) return fail(error.message);
+
+  revalidateFinance();
+  revalidatePath("/admin", "layout");
+  await logAudit({
+    actorId: userId,
+    actorName: profile.full_name,
+    actorRole: profile.role,
+    action: "RECEIPT_SETTINGS_UPDATE",
+    entityType: "store_settings",
+    summary: `${profile.full_name || "Finance"} updated the receipt display settings`,
+  });
+  return ok("Receipt settings saved.");
 }

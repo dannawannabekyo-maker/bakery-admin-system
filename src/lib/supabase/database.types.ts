@@ -163,6 +163,9 @@ export interface Database {
           payment_note: string | null;
           tax_rate: number;
           daily_po_item_capacity: number;
+          show_tax_on_receipt: boolean;
+          show_logo_on_receipt: boolean;
+          show_po_instructions: boolean;
           updated_at: string;
         };
         Insert: {
@@ -175,6 +178,9 @@ export interface Database {
           payment_note?: string | null;
           tax_rate?: number;
           daily_po_item_capacity?: number;
+          show_tax_on_receipt?: boolean;
+          show_logo_on_receipt?: boolean;
+          show_po_instructions?: boolean;
           updated_at?: string;
         };
         Update: Partial<

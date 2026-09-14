@@ -9,6 +9,7 @@ const NAV = [
   { href: "/admin/categories", label: "Categories" },
   { href: "/admin/users", label: "Users" },
   { href: "/admin/settings", label: "Payments" },
+  { href: "/finance/receipt-settings", label: "Receipt Settings" },
   { href: "/admin/activity", label: "Activity Log" },
   // God Mode should reach every other dashboard in one click — these were
   // never linked from here before, so Admin had no visible way to open them.

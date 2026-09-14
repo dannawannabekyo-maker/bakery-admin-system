@@ -188,6 +188,9 @@ export async function getStoreSettings(): Promise<StoreSettingsRow> {
       payment_note: null,
       tax_rate: DEFAULT_TAX_RATE,
       daily_po_item_capacity: DEFAULT_DAILY_PO_ITEM_CAPACITY,
+      show_tax_on_receipt: true,
+      show_logo_on_receipt: true,
+      show_po_instructions: true,
       updated_at: new Date(0).toISOString(),
     }
   );
