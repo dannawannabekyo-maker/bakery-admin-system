@@ -1,8 +1,8 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
-import { getOrder, getStoreSettings } from "@/lib/data";
-import { requireSession } from "@/lib/auth";
+import { getOrder, getStoreSettings, isGuestOrder } from "@/lib/data";
+import { getSession } from "@/lib/auth";
 import { formatCurrency, formatDateTime } from "@/lib/format";
 import { Card, Alert } from "@/components/ui";
 import { PaymentForm } from "./payment-form";
@@ -16,12 +16,22 @@ export default async function PaymentPage({
   params: Promise<{ orderId: string }>;
 }) {
   const { orderId } = await params;
-  const [{ userId }, order, settings] = await Promise.all([
-    requireSession(`/checkout/payment/${orderId}`),
-    getOrder(orderId),
+  // A guest order (no account) is reachable by anyone with the link — same
+  // trust model as the public `/receipt/[orderId]` nota. A real customer's
+  // order still requires being logged in as its owner (or staff).
+  const [session, order, settings] = await Promise.all([
+    getSession(),
+    getOrder(orderId, { admin: true }),
     getStoreSettings(),
   ]);
   if (!order) notFound();
+
+  const guest = isGuestOrder(order);
+  const isOwner = session && order.customer_id === session.userId;
+  const isStaff = session && session.profile.role === "ADMIN";
+  if (!guest && !isOwner && !isStaff) {
+    redirect(`/login?next=${encodeURIComponent(`/checkout/payment/${orderId}`)}`);
+  }
 
   const backToOrder = (
     <Link href={`/orders/${order.id}`} className="text-primary underline">

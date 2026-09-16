@@ -11,12 +11,16 @@ import type { OrderType } from "@/lib/constants";
 export type NewOrderItem = { productId: string; quantity: number };
 
 export type CreateOrderInput = {
-  customerId: string;
-  createdBy: string;
+  /** Either customerId, or both guestName + guestPhone — never neither. */
+  customerId?: string;
+  createdBy?: string;
+  /** Login-free guest checkout — set together, only when customerId is omitted. */
+  guestName?: string;
+  guestPhone?: string;
   items: NewOrderItem[];
   pickupDate?: string | null;
   adminNotes?: string | null;
-  /** Use the service-role client (Admin / Sales server flows). */
+  /** Use the service-role client (Admin / Sales server flows, and guest checkout — no session to bind RLS to). */
   privileged?: boolean;
   /** ADMIN-only escape hatch to force a booking past the nightly capacity. */
   bypassCapacity?: boolean;
@@ -39,6 +43,10 @@ export async function createOrder(
   const supabase: DB = input.privileged
     ? (createAdminClient() as unknown as DB)
     : ((await createClient()) as unknown as DB);
+
+  if (!input.customerId && !(input.guestName && input.guestPhone)) {
+    return { ok: false, error: "Missing customer — need an account or a guest name + phone." };
+  }
 
   const cleanItems = input.items
     .map((i) => ({ productId: i.productId, quantity: Math.floor(i.quantity) }))
@@ -115,8 +123,10 @@ export async function createOrder(
   const { data: order, error: oErr } = await supabase
     .from("orders")
     .insert({
-      customer_id: input.customerId,
-      created_by: input.createdBy,
+      customer_id: input.customerId ?? null,
+      created_by: input.createdBy ?? null,
+      guest_name: input.guestName ?? null,
+      guest_phone: input.guestPhone ?? null,
       order_type: orderType,
       status: "UNPAID",
       pickup_or_delivery_date: input.pickupDate ?? null,

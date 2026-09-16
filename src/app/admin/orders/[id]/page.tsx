@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { getOrder, getReceiptSignedUrl } from "@/lib/data";
+import { orderContactName, orderContactPhone } from "@/lib/order-contact";
 import { formatCurrency, formatDateTime } from "@/lib/format";
 import { PAYMENT_METHOD_LABEL, type PaymentMethod } from "@/lib/constants";
 import { Card, StatusBadge } from "@/components/ui";
@@ -91,8 +92,8 @@ export default async function AdminOrderDetail({
 
         <Card className="space-y-2 text-sm">
           <h2 className="font-semibold">Customer</h2>
-          <p>{order.customer?.full_name ?? "—"}</p>
-          <p className="text-foreground/60">{order.customer?.phone_number ?? "—"}</p>
+          <p>{orderContactName(order)}</p>
+          <p className="text-foreground/60">{orderContactPhone(order) ?? "—"}</p>
           <p className="text-foreground/60">{order.customer?.address ?? "No address"}</p>
           <hr className="border-border" />
           <p>

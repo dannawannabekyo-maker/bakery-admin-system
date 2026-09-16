@@ -16,6 +16,14 @@ const PROTECTED: { prefix: string; roles: string[] }[] = [
   { prefix: "/orders", roles: ["CUSTOMER", "ADMIN", "SALES", "SALES_MANAGER"] },
 ];
 
+/**
+ * Sub-paths that must stay reachable without login even though their parent
+ * prefix above is protected — guest checkout. Auth/ownership for these is
+ * enforced by the page itself (unguessable order-id = capability, same
+ * model as the public `/receipt/[orderId]` nota), not by role/session here.
+ */
+const PUBLIC_EXCEPTIONS = ["/checkout/guest", "/checkout/payment"];
+
 const ROLE_HOME: Record<string, string> = {
   ADMIN: "/admin",
   SALES: "/sales",
@@ -29,9 +37,12 @@ export async function middleware(request: NextRequest) {
   const { supabaseResponse, user } = await updateSession(request);
   const { pathname, search } = request.nextUrl;
 
-  const rule = PROTECTED.find(
-    (r) => pathname === r.prefix || pathname.startsWith(r.prefix + "/"),
+  const isPublicException = PUBLIC_EXCEPTIONS.some(
+    (p) => pathname === p || pathname.startsWith(p + "/"),
   );
+  const rule = isPublicException
+    ? undefined
+    : PROTECTED.find((r) => pathname === r.prefix || pathname.startsWith(r.prefix + "/"));
 
   // Signed-in users hitting the auth pages -> bounce to their dashboard.
   const onAuthPage = pathname === "/login" || pathname === "/register";

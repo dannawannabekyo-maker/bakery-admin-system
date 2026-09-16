@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 
 import { getReceiptData } from "@/lib/receipt";
+import { orderContactName, orderContactPhone } from "@/lib/order-contact";
 import { formatCurrency, formatDateTime } from "@/lib/format";
 import { PrintButton } from "./print-button";
 
@@ -62,8 +63,8 @@ export default async function ReceiptPage({
 
         <Divider />
 
-        <Row label="Pelanggan" value={order.customer?.full_name || "—"} />
-        <Row label="Telp" value={order.customer?.phone_number || "—"} />
+        <Row label="Pelanggan" value={orderContactName(order)} />
+        <Row label="Telp" value={orderContactPhone(order) || "—"} />
 
         <Divider />
 

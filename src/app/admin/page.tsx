@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { listOrders } from "@/lib/data";
+import { orderContactName } from "@/lib/order-contact";
 import { getFinanceSettings } from "@/lib/finance";
 import { formatCurrency, formatDateTime, taxBreakdown } from "@/lib/format";
 import { ORDER_STATUSES } from "@/lib/constants";
@@ -88,7 +89,7 @@ export default async function AdminOverview() {
                   {o.order_number}
                 </Link>
                 <span className="text-foreground/60">
-                  {o.customer?.full_name ?? "—"}
+                  {orderContactName(o)}
                 </span>
                 <span>{formatCurrency(o.total_amount)}</span>
                 <StatusBadge status={o.status} />

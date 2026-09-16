@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { listOrders } from "@/lib/data";
+import { orderContactName, orderContactPhone } from "@/lib/order-contact";
 import { formatCurrency, formatDateTime } from "@/lib/format";
 import { ORDER_STATUSES } from "@/lib/constants";
 import { Card, StatusBadge, Badge } from "@/components/ui";
@@ -64,10 +65,8 @@ export default async function AdminOrdersPage({
                 <StatusBadge status={o.status} />
               </div>
               <p className="text-foreground/60">
-                {o.customer?.full_name ?? "—"}
-                {o.customer?.phone_number
-                  ? ` · ${o.customer.phone_number}`
-                  : ""}
+                {orderContactName(o)}
+                {orderContactPhone(o) ? ` · ${orderContactPhone(o)}` : ""}
               </p>
               <div className="flex items-center justify-between">
                 <span className="text-foreground/60">
@@ -114,9 +113,9 @@ export default async function AdminOrdersPage({
                   </div>
                 </td>
                 <td className="p-3">
-                  {o.customer?.full_name ?? "—"}
+                  {orderContactName(o)}
                   <div className="text-xs text-foreground/50">
-                    {o.customer?.phone_number ?? ""}
+                    {orderContactPhone(o) ?? ""}
                   </div>
                 </td>
                 <td className="p-3">

@@ -114,6 +114,30 @@ export function AppearanceForm({ settings }: { settings: StoreSettingsRow }) {
         )}
       </Card>
 
+      <Card className="space-y-3">
+        <h2 className="font-semibold">Sales contact (WhatsApp)</h2>
+        <p className="text-sm text-foreground/60">
+          Shown as a &ldquo;Contact Sales&rdquo; button on the shop front page,
+          for guest customers who need help. Leave the number empty to hide
+          the button.
+        </p>
+        <Field label="WhatsApp number" hint="e.g. 08123456789 — any format works.">
+          <Input
+            name="sales_whatsapp_number"
+            type="tel"
+            defaultValue={settings.sales_whatsapp_number ?? ""}
+            placeholder="08123456789"
+          />
+        </Field>
+        <Field label="Display label (optional)" hint="Shown on the button, e.g. 'Sales Allins Bakery'.">
+          <Input
+            name="sales_whatsapp_label"
+            defaultValue={settings.sales_whatsapp_label ?? ""}
+            placeholder="Sales"
+          />
+        </Field>
+      </Card>
+
       <SubmitButton pendingText="Saving…">Save appearance settings</SubmitButton>
     </form>
   );

@@ -2,6 +2,7 @@ import "server-only";
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { addDaysStr, jakartaDateString, jakartaDayStartISO } from "@/lib/format";
+import { orderContactName } from "@/lib/order-contact";
 import type { OrderStatus } from "@/lib/constants";
 
 /** Orders in these statuses are actually going to be baked — matches the kanban. */
@@ -13,6 +14,7 @@ type RawNightOrder = {
   status: OrderStatus;
   pickup_or_delivery_date: string;
   customer: { full_name: string } | null;
+  guest_name: string | null;
   items: { quantity: number; product: { id: string; name: string } | null }[] | null;
 };
 
@@ -27,7 +29,7 @@ async function fetchNightOrders(
   const { data } = await admin
     .from("orders")
     .select(
-      "id, order_number, status, pickup_or_delivery_date, customer:profiles!orders_customer_id_fkey(full_name), items:order_items(quantity, product:products(id,name))",
+      "id, order_number, status, pickup_or_delivery_date, guest_name, customer:profiles!orders_customer_id_fkey(full_name), items:order_items(quantity, product:products(id,name))",
     )
     .eq("order_type", "PRE_ORDER")
     .in("status", PRODUCTION_STATUSES)
@@ -119,7 +121,7 @@ export async function getNightBoard(date: string): Promise<NightBoard> {
       line.lines.push({
         orderId: o.id,
         orderNumber: o.order_number,
-        customerName: o.customer?.full_name ?? "—",
+        customerName: orderContactName(o),
         qty: it.quantity,
         status: o.status,
       });

@@ -7,6 +7,7 @@ import { CartProvider } from "@/components/cart/cart-context";
 import { CartBadge } from "@/components/cart/cart-badge";
 import { BrandMark } from "@/components/brand-mark";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { SalesWhatsappButton } from "@/components/sales-whatsapp-button";
 
 export default async function ShopLayout({
   children,
@@ -84,6 +85,10 @@ export default async function ShopLayout({
           © {new Date().getFullYear()} {settings.store_name}
         </footer>
       </div>
+      <SalesWhatsappButton
+        number={settings.sales_whatsapp_number}
+        label={settings.sales_whatsapp_label}
+      />
     </CartProvider>
   );
 }

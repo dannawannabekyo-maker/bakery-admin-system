@@ -11,6 +11,7 @@ import { fail, ok, slugify, type ActionResult } from "@/lib/action-result";
 import { ORDER_STATUSES, ROLES, STORAGE_BUCKETS } from "@/lib/constants";
 import { resolveImageUrl } from "@/lib/images";
 import { normalizeHex } from "@/lib/color";
+import { normalizePhone } from "@/lib/format";
 
 function revalidateAdmin() {
   revalidatePath("/admin", "layout");
@@ -545,9 +546,18 @@ export async function saveAppearanceSettings(
   const primaryColor = normalizeHex(rawColor);
   if (!primaryColor) return fail("Brand color must be a valid hex code, e.g. #a8547f.");
 
+  const rawWhatsapp = String(formData.get("sales_whatsapp_number") ?? "").trim();
+  const whatsappNumber = rawWhatsapp ? normalizePhone(rawWhatsapp) : null;
+  if (rawWhatsapp && !whatsappNumber) {
+    return fail("Sales WhatsApp number doesn't look valid.");
+  }
+  const whatsappLabel = String(formData.get("sales_whatsapp_label") ?? "").trim() || null;
+
   const patch: Record<string, string | null> = {
     store_name: storeName,
     theme_primary_color: primaryColor,
+    sales_whatsapp_number: whatsappNumber,
+    sales_whatsapp_label: whatsappNumber ? whatsappLabel : null,
   };
 
   const file = formData.get("brand_logo") as File | null;

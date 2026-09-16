@@ -95,9 +95,17 @@ export default function CartPage() {
               </p>
             )}
           </div>
-          <Link href="/checkout">
-            <Button size="md">Proceed to checkout</Button>
-          </Link>
+          <div className="flex flex-col items-end gap-1.5">
+            <Link href="/checkout">
+              <Button size="md">Proceed to checkout</Button>
+            </Link>
+            <Link
+              href="/checkout/guest"
+              className="text-xs text-foreground/60 underline hover:text-foreground"
+            >
+              Checkout as guest (no login)
+            </Link>
+          </div>
         </div>
       </div>
     </div>

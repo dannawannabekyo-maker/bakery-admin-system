@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { listOrders, getReceiptSignedUrl } from "@/lib/data";
+import { orderContactName, orderContactPhone } from "@/lib/order-contact";
 import { formatCurrency, formatDateTime } from "@/lib/format";
 import { Card, StatusBadge, Badge, EmptyState } from "@/components/ui";
 import { ConfirmButton, SubmitButton } from "@/components/form";
@@ -59,8 +60,8 @@ export default async function SalesPage() {
               <Card key={o.id} className="space-y-2">
                 <OrderHead o={o} />
                 <p className="text-sm text-foreground/60">
-                  {o.customer?.full_name} ·{" "}
-                  {o.customer?.phone_number ?? "no phone"}
+                  {orderContactName(o)} ·{" "}
+                  {orderContactPhone(o) ?? "no phone"}
                 </p>
                 <p className="text-sm">
                   Metode:{" "}
@@ -120,8 +121,8 @@ export default async function SalesPage() {
               <Card key={o.id} className="space-y-2">
                 <OrderHead o={o} />
                 <p className="text-sm">
-                  {o.customer?.full_name} ·{" "}
-                  {o.customer?.phone_number ?? "no phone"}
+                  {orderContactName(o)} ·{" "}
+                  {orderContactPhone(o) ?? "no phone"}
                 </p>
                 <p className="text-sm text-foreground/60">
                   {o.items.length} item(s) · {formatDateTime(o.created_at)}
@@ -217,7 +218,7 @@ function OrdersTable({
               <span className="font-medium">{o.order_number}</span>
               <StatusBadge status={o.status} />
             </div>
-            <p className="text-foreground/60">{o.customer?.full_name ?? "—"}</p>
+            <p className="text-foreground/60">{orderContactName(o)}</p>
             <div className="flex items-center justify-between">
               <span className="text-foreground/60">
                 {o.pickup_or_delivery_date
@@ -252,7 +253,7 @@ function OrdersTable({
             {rows.map((o) => (
               <tr key={o.id} className="border-b border-border">
                 <td className="p-3 font-medium">{o.order_number}</td>
-                <td className="p-3">{o.customer?.full_name ?? "—"}</td>
+                <td className="p-3">{orderContactName(o)}</td>
                 <td className="p-3">
                   {o.pickup_or_delivery_date
                     ? formatDateTime(o.pickup_or_delivery_date)

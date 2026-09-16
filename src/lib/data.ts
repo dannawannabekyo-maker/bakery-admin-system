@@ -32,6 +32,11 @@ export type OrderWithRelations = OrderRow & {
   })[];
 };
 
+/** True for a login-free guest checkout order (no linked customer account). */
+export function isGuestOrder(order: Pick<OrderWithRelations, "customer_id">): boolean {
+  return order.customer_id === null;
+}
+
 /* ------------------------------------------------------------------ catalog */
 
 export async function getActiveCatalog() {
@@ -213,6 +218,8 @@ export const getStoreSettings = cache(async (): Promise<StoreSettingsRow> => {
       brand_logo_url: null,
       store_name: DEFAULT_STORE_NAME,
       theme_primary_color: DEFAULT_PRIMARY_COLOR,
+      sales_whatsapp_number: null,
+      sales_whatsapp_label: null,
       updated_at: new Date(0).toISOString(),
     }
   );

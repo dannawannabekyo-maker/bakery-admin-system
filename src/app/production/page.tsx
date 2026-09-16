@@ -1,4 +1,5 @@
 import { listOrders, type OrderWithRelations } from "@/lib/data";
+import { orderContactName, orderContactPhone } from "@/lib/order-contact";
 import { formatCurrency, formatDateTime } from "@/lib/format";
 import { Card, Badge } from "@/components/ui";
 import { SubmitButton } from "@/components/form";
@@ -76,7 +77,7 @@ export default async function ProductionBoard() {
                 </ul>
 
                 <div className="text-xs text-foreground/60">
-                  {o.customer?.full_name} · {o.customer?.phone_number ?? "—"}
+                  {orderContactName(o)} · {orderContactPhone(o) ?? "—"}
                 </div>
                 {o.pickup_or_delivery_date && (
                   <div className="text-xs font-medium text-primary">

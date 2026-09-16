@@ -106,8 +106,11 @@ export interface Database {
         Row: {
           id: string;
           order_number: string;
-          customer_id: string;
-          created_by: string;
+          customer_id: string | null;
+          created_by: string | null;
+          /** Set together, only for a login-free guest checkout order. */
+          guest_name: string | null;
+          guest_phone: string | null;
           order_type: OrderTypeEnum;
           status: OrderStatusEnum;
           pickup_or_delivery_date: string | null;
@@ -123,8 +126,10 @@ export interface Database {
         Insert: {
           id?: string;
           order_number?: string;
-          customer_id: string;
-          created_by: string;
+          customer_id?: string | null;
+          created_by?: string | null;
+          guest_name?: string | null;
+          guest_phone?: string | null;
           order_type?: OrderTypeEnum;
           status?: OrderStatusEnum;
           pickup_or_delivery_date?: string | null;
@@ -170,6 +175,8 @@ export interface Database {
           brand_logo_url: string | null;
           store_name: string;
           theme_primary_color: string;
+          sales_whatsapp_number: string | null;
+          sales_whatsapp_label: string | null;
           updated_at: string;
         };
         Insert: {
@@ -188,6 +195,8 @@ export interface Database {
           brand_logo_url?: string | null;
           store_name?: string;
           theme_primary_color?: string;
+          sales_whatsapp_number?: string | null;
+          sales_whatsapp_label?: string | null;
           updated_at?: string;
         };
         Update: Partial<

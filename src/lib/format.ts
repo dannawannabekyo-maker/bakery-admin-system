@@ -51,6 +51,12 @@ export function isoDate(d: Date): string {
   return d.toISOString().slice(0, 10);
 }
 
+/** Loosely validates a phone number, returning digits only (or null if implausible). */
+export function normalizePhone(raw: unknown): string | null {
+  const digits = String(raw ?? "").replace(/\D/g, "");
+  return digits.length >= 8 && digits.length <= 15 ? digits : null;
+}
+
 export function formatPercent(rate: number): string {
   return new Intl.NumberFormat(LOCALE, {
     style: "percent",

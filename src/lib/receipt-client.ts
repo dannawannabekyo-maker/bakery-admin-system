@@ -11,6 +11,7 @@ import { jsPDF } from "jspdf";
 import { formatCurrency, formatDateTime, taxBreakdown } from "@/lib/format";
 import { PAYMENT_METHOD_LABEL, type PaymentMethod } from "@/lib/constants";
 import type { OrderWithRelations } from "@/lib/data";
+import { orderContactName, orderContactPhone } from "@/lib/order-contact";
 import { poInstructionLines, type ReceiptSettings } from "@/lib/receipt-shared";
 
 export type { ReceiptSettings };
@@ -174,8 +175,9 @@ export async function buildReceiptPdf(
 
   row("No. Order", order.order_number, true);
   row("Tanggal", formatDateTime(order.created_at));
-  row("Pelanggan", order.customer?.full_name || "—");
-  if (order.customer?.phone_number) row("Telp", order.customer.phone_number);
+  row("Pelanggan", orderContactName(order));
+  const contactPhone = orderContactPhone(order);
+  if (contactPhone) row("Telp", contactPhone);
 
   divider();
 
@@ -235,7 +237,7 @@ export async function generateAndSendReceipt(
   settings: ReceiptSettings,
   presentWindow?: Window | null,
 ): Promise<void> {
-  const phone = formatWaPhone(order.customer?.phone_number);
+  const phone = formatWaPhone(orderContactPhone(order));
   if (!phone) {
     presentWindow?.close();
     throw new Error("This customer has no phone number on file — WhatsApp not sent.");
