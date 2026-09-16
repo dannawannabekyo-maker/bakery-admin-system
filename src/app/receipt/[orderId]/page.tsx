@@ -29,7 +29,7 @@ export default async function ReceiptPage({
   const data = await getReceiptData(orderId);
   if (!data) notFound();
 
-  const { order, tax, paymentLabel, statusLabel } = data;
+  const { order, tax, paymentLabel, statusLabel, settings, poLines } = data;
 
   return (
     <div className="mx-auto min-h-screen max-w-sm bg-background px-4 py-8 text-foreground print:max-w-none print:p-0">
@@ -42,6 +42,14 @@ export default async function ReceiptPage({
 
       <div className="space-y-3 rounded-xl border border-border p-5 text-sm print:rounded-none print:border-0 print:p-0">
         <div className="text-center">
+          {settings.showLogo && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={settings.logoUrl || "/logo.svg"}
+              alt="Allins Bakery"
+              className="mx-auto mb-2 h-14 w-14 object-contain"
+            />
+          )}
           <p className="text-lg font-bold">🧁 Allins Bakery</p>
           <p className="text-foreground/60">Nota Pembelian</p>
         </div>
@@ -85,13 +93,16 @@ export default async function ReceiptPage({
 
         <Divider />
 
+        {settings.showTax && (
+          <>
+            <Row label="Subtotal" value={formatCurrency(tax.net)} />
+            <Row label={`PPN (${(tax.rate * 100).toFixed(0)}%)`} value={formatCurrency(tax.tax)} />
+          </>
+        )}
         <div className="flex items-baseline justify-between text-base font-bold">
           <span>Total Bayar</span>
           <span>{formatCurrency(order.total_amount)}</span>
         </div>
-        <p className="text-right text-xs text-foreground/50">
-          (Termasuk PPN {(tax.rate * 100).toFixed(0)}%: {formatCurrency(tax.tax)})
-        </p>
 
         <Row label="Metode" value={paymentLabel} />
         {order.pickup_or_delivery_date && (
@@ -99,6 +110,20 @@ export default async function ReceiptPage({
             label={order.order_type === "PRE_ORDER" ? "Ambil/Antar" : "Waktu diinginkan"}
             value={formatDateTime(order.pickup_or_delivery_date)}
           />
+        )}
+
+        {poLines.length > 0 && (
+          <>
+            <Divider />
+            <div className="space-y-0.5 text-xs">
+              <p className="font-semibold">{poLines[0]}</p>
+              {poLines.slice(1).map((line, i) => (
+                <p key={i} className="text-foreground/70">
+                  {line}
+                </p>
+              ))}
+            </div>
+          </>
         )}
 
         <Divider />

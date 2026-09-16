@@ -5,12 +5,12 @@ import { useActionState } from "react";
 import { saveReceiptSettings } from "../actions";
 import { Card, Field, Input } from "@/components/ui";
 import { SubmitButton, Feedback } from "@/components/form";
-import type { StoreSettingsRow } from "@/lib/supabase/database.types";
+import type { ReceiptSettings } from "@/lib/receipt-shared";
 
 export function ReceiptSettingsForm({
   settings,
 }: {
-  settings: StoreSettingsRow;
+  settings: ReceiptSettings;
 }) {
   const [state, action] = useActionState(saveReceiptSettings, null);
 
@@ -20,12 +20,12 @@ export function ReceiptSettingsForm({
 
       <Card className="space-y-3">
         <h2 className="font-semibold">Receipt logo</h2>
-        {settings.receipt_logo_url ? (
+        {settings.logoUrl ? (
           <div className="space-y-1">
             <p className="text-xs text-foreground/60">Current uploaded logo</p>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={settings.receipt_logo_url}
+              src={settings.logoUrl}
               alt="Current receipt logo"
               className="h-24 w-24 rounded-lg border border-border object-contain bg-white"
             />
@@ -41,7 +41,7 @@ export function ReceiptSettingsForm({
         >
           <Input type="file" name="receipt_logo" accept="image/*" />
         </Field>
-        {settings.receipt_logo_url && (
+        {settings.logoUrl && (
           <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" name="remove_receipt_logo" />
             Remove uploaded logo (revert to the default placeholder)
@@ -52,25 +52,26 @@ export function ReceiptSettingsForm({
       <Card className="space-y-3">
         <h2 className="font-semibold">PDF &amp; WhatsApp receipt content</h2>
         <p className="text-sm text-foreground/60">
-          Applied everywhere the &ldquo;Generate PDF &amp; Send WA&rdquo; button is used —
-          the order list generates the receipt with these settings, no per-order preview.
+          Applied to every receipt in the system: the &ldquo;Generate PDF &amp; Send
+          WA&rdquo; button, and the customer-facing nota page (also used for
+          in-store/offline printing) — no per-order preview.
         </p>
 
         <Toggle
           name="show_tax_on_receipt"
-          defaultChecked={settings.show_tax_on_receipt}
+          defaultChecked={settings.showTax}
           label="Show tax breakdown"
           hint="When off, the tax row is hidden and the total shown is the full amount paid (no separate tax line)."
         />
         <Toggle
           name="show_logo_on_receipt"
-          defaultChecked={settings.show_logo_on_receipt}
+          defaultChecked={settings.showLogo}
           label="Show bakery logo"
           hint="Logo loaded from /public/logo.svg."
         />
         <Toggle
           name="show_po_instructions"
-          defaultChecked={settings.show_po_instructions}
+          defaultChecked={settings.showPoInstructions}
           label="Show PO pickup instructions"
           hint="Footer note with the pickup date/time window, for pre-order items only."
         />

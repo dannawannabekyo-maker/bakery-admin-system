@@ -8,18 +8,12 @@
 
 import { jsPDF } from "jspdf";
 
-import { formatCurrency, formatDate, formatDateTime, formatTime, taxBreakdown } from "@/lib/format";
+import { formatCurrency, formatDateTime, taxBreakdown } from "@/lib/format";
 import { PAYMENT_METHOD_LABEL, type PaymentMethod } from "@/lib/constants";
 import type { OrderWithRelations } from "@/lib/data";
+import { poInstructionLines, type ReceiptSettings } from "@/lib/receipt-shared";
 
-export type ReceiptSettings = {
-  showTax: boolean;
-  showLogo: boolean;
-  showPoInstructions: boolean;
-  taxRate: number;
-  /** Admin-uploaded receipt logo (from Receipt Settings). Null -> fall back to /logo.svg. */
-  logoUrl: string | null;
-};
+export type { ReceiptSettings };
 
 /** "0812..." / "+62 812..." / "62812..." -> "62812..." (digits only, wa.me format). */
 export function formatWaPhone(raw: string | null | undefined): string | null {
@@ -84,17 +78,6 @@ async function loadLogoDataUrl(url: string): Promise<string | null> {
   } catch {
     return null;
   }
-}
-
-function poInstructionLines(order: OrderWithRelations): string[] {
-  if (!order.pickup_or_delivery_date) return [];
-  const start = new Date(order.pickup_or_delivery_date);
-  const end = new Date(start.getTime() + 2 * 60 * 60 * 1000);
-  return [
-    "PO Waiting Time Instructions:",
-    `Your order will be ready for pickup on ${formatDate(start)}.`,
-    `Please collect it between ${formatTime(start)} and ${formatTime(end)}.`,
-  ];
 }
 
 /** Same content/settings feed both the PDF and the WhatsApp text so they never drift apart. */

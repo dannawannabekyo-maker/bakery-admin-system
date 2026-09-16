@@ -10,6 +10,7 @@ import { fail, ok, type ActionResult } from "@/lib/action-result";
 import { formatCurrency } from "@/lib/format";
 import { EXPENSE_CATEGORIES, STORAGE_BUCKETS } from "@/lib/constants";
 import { getStoreSettings } from "@/lib/data";
+import type { ReceiptSettings } from "@/lib/receipt-shared";
 
 function revalidateFinance() {
   revalidatePath("/finance", "layout");
@@ -157,16 +158,8 @@ export async function deleteExpense(formData: FormData): Promise<ActionResult> {
  * the database or storage, only produced on-device at click time.
  */
 
-export type ReceiptToggleSettings = {
-  showTax: boolean;
-  showLogo: boolean;
-  showPoInstructions: boolean;
-  taxRate: number;
-  logoUrl: string | null;
-};
-
 /** Read by the one-click "Generate PDF & Send WA" button right before it renders the receipt. */
-export async function getReceiptToggleSettings(): Promise<ReceiptToggleSettings> {
+export async function getReceiptToggleSettings(): Promise<ReceiptSettings> {
   await assertRole(["FINANCE", "ADMIN"]);
   const settings = await getStoreSettings();
   return {

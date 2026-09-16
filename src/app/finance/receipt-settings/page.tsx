@@ -1,12 +1,12 @@
-import { getStoreSettings } from "@/lib/data";
 import { PageHeader } from "@/components/dashboard-shell";
 import { ReceiptSettingsForm } from "./receipt-settings-form";
+import { getReceiptToggleSettings } from "../actions";
 
 export const metadata = { title: "Receipt settings" };
 export const dynamic = "force-dynamic";
 
 export default async function ReceiptSettingsPage() {
-  const settings = await getStoreSettings();
+  const settings = await getReceiptToggleSettings();
 
   return (
     <>
