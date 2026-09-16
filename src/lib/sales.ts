@@ -31,11 +31,14 @@ export type SalesRecap = {
 export async function getSalesRecap(
   period: FinancePeriod,
   anchor?: string,
+  /** Scope to one Sales rep's own orders (orders.created_by). Omit for the full store view (Admin). */
+  createdBy?: string,
 ): Promise<SalesRecap> {
   const range = periodRange(period, anchor);
   const orders = await listOrders({
     from: range.startISO,
     to: range.endISO,
+    createdBy,
     limit: 1000,
   });
 

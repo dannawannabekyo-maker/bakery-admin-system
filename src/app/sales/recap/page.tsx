@@ -1,3 +1,4 @@
+import { requireRole } from "@/lib/auth";
 import { getSalesRecap } from "@/lib/sales";
 import { jakartaDateString } from "@/lib/format";
 import { FINANCE_PERIODS, FINANCE_PERIOD_LABEL, type FinancePeriod } from "@/lib/constants";
@@ -13,19 +14,28 @@ export default async function SalesRecapPage({
 }: {
   searchParams: Promise<{ date?: string; period?: string }>;
 }) {
+  // Each Sales rep only recaps orders they personally took (orders.created_by)
+  // — customer self-checkout orders aren't "theirs" and are excluded, same as
+  // any other rep's manual orders. Admin sees the whole store instead.
+  const { userId, profile } = await requireRole(["SALES", "ADMIN"], "/sales");
   const { date, period: rawPeriod } = await searchParams;
   const anchor = /^\d{4}-\d{2}-\d{2}$/.test(date ?? "") ? (date as string) : jakartaDateString();
   const period: FinancePeriod = (FINANCE_PERIODS as readonly string[]).includes(rawPeriod ?? "")
     ? (rawPeriod as FinancePeriod)
     : "daily";
 
-  const recap = await getSalesRecap(period, anchor);
+  const scopedToSelf = profile.role === "SALES";
+  const recap = await getSalesRecap(period, anchor, scopedToSelf ? userId : undefined);
 
   return (
     <>
       <PageHeader
         title="Recap"
-        description="Orders taken and items sold — counts only. For revenue and financial totals, ask Finance/Admin."
+        description={
+          scopedToSelf
+            ? "Orders you personally took and items you sold — counts only, not revenue. Customer self-checkout orders and other reps' orders aren't included."
+            : "Store-wide orders taken and items sold — counts only. For revenue and financial totals, see Finance."
+        }
         action={
           <form method="get" className="flex items-end gap-2">
             <label className="text-xs text-foreground/60">

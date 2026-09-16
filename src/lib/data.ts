@@ -132,6 +132,8 @@ export async function listOrders(opts?: {
   admin?: boolean;
   statuses?: string[];
   customerId?: string;
+  /** Who took/placed the order (orders.created_by) — a Sales rep's own manual orders, say. */
+  createdBy?: string;
   limit?: number;
   /** created_at range, ISO instants — inclusive start, exclusive end. */
   from?: string;
@@ -147,6 +149,7 @@ export async function listOrders(opts?: {
   if (opts?.statuses?.length)
     q = q.in("status", opts.statuses as OrderStatusEnum[]);
   if (opts?.customerId) q = q.eq("customer_id", opts.customerId);
+  if (opts?.createdBy) q = q.eq("created_by", opts.createdBy);
   if (opts?.from) q = q.gte("created_at", opts.from);
   if (opts?.to) q = q.lt("created_at", opts.to);
 
