@@ -31,8 +31,9 @@ if (!email || !password) {
   );
   process.exit(1);
 }
-if (!["ADMIN", "SALES", "PRODUCTION", "CUSTOMER"].includes(role)) {
-  console.error("ROLE must be one of ADMIN | SALES | PRODUCTION | CUSTOMER");
+const VALID_ROLES = ["ADMIN", "SALES", "SALES_MANAGER", "PRODUCTION", "FINANCE", "CUSTOMER"];
+if (!VALID_ROLES.includes(role)) {
+  console.error(`ROLE must be one of ${VALID_ROLES.join(" | ")}`);
   process.exit(1);
 }
 

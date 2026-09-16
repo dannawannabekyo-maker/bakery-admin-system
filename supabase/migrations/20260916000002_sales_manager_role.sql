@@ -1,0 +1,11 @@
+-- Add the SALES_MANAGER role: same day-to-day order-handling rights as
+-- SALES (granted in the next migration), plus store-wide order visibility
+-- and an exportable sales report — deliberately kept OUT of Finance's
+-- tables/policies (capital_entries, expenses, store_settings writes stay
+-- FINANCE/ADMIN only).
+--
+-- Own migration file on purpose, same reason as 0007 (FINANCE): Postgres
+-- will not let a newly added enum value be referenced in the same
+-- transaction it was created in, and db-push runs each file in one
+-- transaction. Everything that USES 'SALES_MANAGER' lives in the next file.
+alter type public.user_role add value if not exists 'SALES_MANAGER';

@@ -16,6 +16,7 @@ export type SessionContext = {
 export const ROLE_HOME: Record<Role, string> = {
   ADMIN: "/admin",
   SALES: "/sales",
+  SALES_MANAGER: "/sales",
   PRODUCTION: "/production",
   FINANCE: "/finance",
   CUSTOMER: "/shop",

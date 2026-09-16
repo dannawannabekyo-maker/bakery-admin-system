@@ -5,20 +5,21 @@ import { updateSession } from "@/lib/supabase/middleware";
 /** Route-prefix -> roles allowed to enter it. */
 const PROTECTED: { prefix: string; roles: string[] }[] = [
   { prefix: "/admin", roles: ["ADMIN"] },
-  { prefix: "/sales", roles: ["ADMIN", "SALES"] },
+  { prefix: "/sales", roles: ["ADMIN", "SALES", "SALES_MANAGER"] },
   { prefix: "/production", roles: ["ADMIN", "PRODUCTION"] },
   { prefix: "/finance", roles: ["ADMIN", "FINANCE"] },
   {
     prefix: "/account",
-    roles: ["ADMIN", "SALES", "PRODUCTION", "FINANCE", "CUSTOMER"],
+    roles: ["ADMIN", "SALES", "SALES_MANAGER", "PRODUCTION", "FINANCE", "CUSTOMER"],
   },
   { prefix: "/checkout", roles: ["CUSTOMER", "ADMIN"] },
-  { prefix: "/orders", roles: ["CUSTOMER", "ADMIN", "SALES"] },
+  { prefix: "/orders", roles: ["CUSTOMER", "ADMIN", "SALES", "SALES_MANAGER"] },
 ];
 
 const ROLE_HOME: Record<string, string> = {
   ADMIN: "/admin",
   SALES: "/sales",
+  SALES_MANAGER: "/sales",
   PRODUCTION: "/production",
   FINANCE: "/finance",
   CUSTOMER: "/shop",

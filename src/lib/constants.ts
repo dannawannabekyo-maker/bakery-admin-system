@@ -6,6 +6,7 @@
 export const ROLES = [
   "ADMIN",
   "SALES",
+  "SALES_MANAGER",
   "PRODUCTION",
   "FINANCE",
   "CUSTOMER",
@@ -15,6 +16,7 @@ export type Role = (typeof ROLES)[number];
 export const ROLE_LABEL: Record<Role, string> = {
   ADMIN: "Admin",
   SALES: "Sales",
+  SALES_MANAGER: "Sales Manager",
   PRODUCTION: "Production / Kitchen",
   FINANCE: "Finance",
   CUSTOMER: "Customer",
@@ -114,14 +116,15 @@ export const EXPENSE_CATEGORY_LABEL: Record<string, string> = {
   OTHER: "Lainnya",
 };
 
-/** Recap windows offered by the Finance dashboard. */
-export const FINANCE_PERIODS = ["daily", "weekly", "monthly"] as const;
+/** Recap/report windows offered across Finance and Sales. */
+export const FINANCE_PERIODS = ["daily", "weekly", "monthly", "yearly"] as const;
 export type FinancePeriod = (typeof FINANCE_PERIODS)[number];
 
 export const FINANCE_PERIOD_LABEL: Record<FinancePeriod, string> = {
   daily: "Harian",
   weekly: "Mingguan",
   monthly: "Bulanan",
+  yearly: "Tahunan",
 };
 
 /** All money math / date bucketing for the bakery happens in this zone. */

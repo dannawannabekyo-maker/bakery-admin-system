@@ -13,6 +13,7 @@ export type Json =
 export type UserRole =
   | "ADMIN"
   | "SALES"
+  | "SALES_MANAGER"
   | "PRODUCTION"
   | "FINANCE"
   | "CUSTOMER";

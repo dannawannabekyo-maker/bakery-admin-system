@@ -20,6 +20,17 @@ export function formatDate(value: string | Date | null | undefined): string {
   }).format(d);
 }
 
+/**
+ * Formats a bare "YYYY-MM-DD" (no time component — a report bucket, say) as
+ * a date, anchored at noon so it can't roll to the adjacent day in a viewer
+ * whose browser timezone differs from Jakarta (formatDate on a bare date
+ * string parses as UTC midnight, which a negative-offset timezone would
+ * render as the previous day).
+ */
+export function formatDateOnly(ymd: string): string {
+  return formatDate(`${ymd}T12:00:00`);
+}
+
 export function formatDateTime(value: string | Date | null | undefined): string {
   if (!value) return "—";
   const d = typeof value === "string" ? new Date(value) : value;
@@ -126,6 +137,10 @@ export function periodRange(
     const ny = m === 12 ? y + 1 : y;
     const nm = m === 12 ? 1 : m + 1;
     endDate = `${ny}-${String(nm).padStart(2, "0")}-01`;
+  } else if (period === "yearly") {
+    const [y] = anchor.split("-").map(Number);
+    startDate = `${y}-01-01`;
+    endDate = `${y + 1}-01-01`;
   }
 
   return {
@@ -147,6 +162,12 @@ function periodLabel(
   if (period === "monthly") {
     return new Intl.DateTimeFormat(LOCALE, {
       month: "long",
+      year: "numeric",
+      timeZone: "UTC",
+    }).format(ymdToUtcNoon(start));
+  }
+  if (period === "yearly") {
+    return new Intl.DateTimeFormat(LOCALE, {
       year: "numeric",
       timeZone: "UTC",
     }).format(ymdToUtcNoon(start));

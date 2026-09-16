@@ -134,6 +134,8 @@ export async function listOrders(opts?: {
   customerId?: string;
   /** Who took/placed the order (orders.created_by) — a Sales rep's own manual orders, say. */
   createdBy?: string;
+  /** Fetch exactly these order ids (e.g. a set resolved from the finance_orders view). */
+  ids?: string[];
   limit?: number;
   /** created_at range, ISO instants — inclusive start, exclusive end. */
   from?: string;
@@ -150,6 +152,7 @@ export async function listOrders(opts?: {
     q = q.in("status", opts.statuses as OrderStatusEnum[]);
   if (opts?.customerId) q = q.eq("customer_id", opts.customerId);
   if (opts?.createdBy) q = q.eq("created_by", opts.createdBy);
+  if (opts?.ids) q = q.in("id", opts.ids);
   if (opts?.from) q = q.gte("created_at", opts.from);
   if (opts?.to) q = q.lt("created_at", opts.to);
 

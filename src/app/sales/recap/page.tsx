@@ -17,7 +17,10 @@ export default async function SalesRecapPage({
   // Each Sales rep only recaps orders they personally took (orders.created_by)
   // — customer self-checkout orders aren't "theirs" and are excluded, same as
   // any other rep's manual orders. Admin sees the whole store instead.
-  const { userId, profile } = await requireRole(["SALES", "ADMIN"], "/sales");
+  const { userId, profile } = await requireRole(
+    ["SALES", "SALES_MANAGER", "ADMIN"],
+    "/sales",
+  );
   const { date, period: rawPeriod } = await searchParams;
   const anchor = /^\d{4}-\d{2}-\d{2}$/.test(date ?? "") ? (date as string) : jakartaDateString();
   const period: FinancePeriod = (FINANCE_PERIODS as readonly string[]).includes(rawPeriod ?? "")

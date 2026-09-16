@@ -92,6 +92,7 @@ const PERIOD_TITLE: Record<FinanceRecap["period"], string> = {
   daily: "Daily",
   weekly: "Weekly",
   monthly: "Monthly",
+  yearly: "Yearly",
 };
 
 function RecapCard({ recap }: { recap: FinanceRecap }) {

@@ -16,7 +16,7 @@ export async function salesCreateManualOrder(
   _prev: ActionResult | null,
   formData: FormData,
 ): Promise<ActionResult> {
-  const { userId, profile } = await assertRole(["SALES", "ADMIN"]);
+  const { userId, profile } = await assertRole(["SALES", "SALES_MANAGER", "ADMIN"]);
 
   const customerId = String(formData.get("customer_id") ?? "");
   if (!customerId) return fail("Choose a customer.");
@@ -66,7 +66,7 @@ export async function salesCreateManualOrder(
 }
 
 export async function salesMarkPaid(formData: FormData): Promise<ActionResult> {
-  const { userId, profile } = await assertRole(["SALES", "ADMIN"]);
+  const { userId, profile } = await assertRole(["SALES", "SALES_MANAGER", "ADMIN"]);
   const supabase = await createClient();
   const id = String(formData.get("id"));
 
@@ -99,7 +99,7 @@ export async function salesMarkPaid(formData: FormData): Promise<ActionResult> {
 export async function salesRejectPayment(
   formData: FormData,
 ): Promise<ActionResult> {
-  const { userId, profile } = await assertRole(["SALES", "ADMIN"]);
+  const { userId, profile } = await assertRole(["SALES", "SALES_MANAGER", "ADMIN"]);
   const supabase = await createClient();
   const id = String(formData.get("id"));
   const { data: updated, error } = await supabase
@@ -127,7 +127,7 @@ export async function salesRejectPayment(
 }
 
 export async function salesCancelOrder(formData: FormData): Promise<ActionResult> {
-  const { userId, profile } = await assertRole(["SALES", "ADMIN"]);
+  const { userId, profile } = await assertRole(["SALES", "SALES_MANAGER", "ADMIN"]);
   const supabase = await createClient();
   const id = String(formData.get("id"));
   const { data: updated, error } = await supabase
