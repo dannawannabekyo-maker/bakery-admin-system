@@ -1,9 +1,10 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState } from "react";
 
 import { saveReceiptSettings } from "../actions";
-import { Card, Field, Input } from "@/components/ui";
+import { Card } from "@/components/ui";
 import { SubmitButton, Feedback } from "@/components/form";
 import type { ReceiptSettings } from "@/lib/receipt-shared";
 
@@ -19,14 +20,13 @@ export function ReceiptSettingsForm({
       <Feedback state={state} />
 
       <Card className="space-y-3">
-        <h2 className="font-semibold">Receipt logo</h2>
+        <h2 className="font-semibold">Brand logo</h2>
         {settings.logoUrl ? (
           <div className="space-y-1">
-            <p className="text-xs text-foreground/60">Current uploaded logo</p>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={settings.logoUrl}
-              alt="Current receipt logo"
+              alt={settings.storeName}
               className="h-24 w-24 rounded-lg border border-border object-contain bg-white"
             />
           </div>
@@ -35,18 +35,14 @@ export function ReceiptSettingsForm({
             No logo uploaded yet — using the default placeholder (/logo.svg).
           </p>
         )}
-        <Field
-          label="Upload new logo"
-          hint="PNG/JPG, max 5 MB. Leave empty to keep the current one."
-        >
-          <Input type="file" name="receipt_logo" accept="image/*" />
-        </Field>
-        {settings.logoUrl && (
-          <label className="flex items-center gap-2 text-sm">
-            <input type="checkbox" name="remove_receipt_logo" />
-            Remove uploaded logo (revert to the default placeholder)
-          </label>
-        )}
+        <p className="text-sm text-foreground/60">
+          The logo itself, plus the store name and brand color, are managed on{" "}
+          <Link href="/admin/appearance" className="text-primary underline">
+            Admin &gt; Appearance
+          </Link>{" "}
+          — the toggle below only controls whether it&apos;s printed on this
+          nota.
+        </p>
       </Card>
 
       <Card className="space-y-3">

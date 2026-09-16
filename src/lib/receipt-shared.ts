@@ -9,11 +9,12 @@ import type { OrderWithRelations } from "@/lib/data";
  * can never drift apart.
  */
 export type ReceiptSettings = {
+  storeName: string;
   showTax: boolean;
   showLogo: boolean;
   showPoInstructions: boolean;
   taxRate: number;
-  /** Admin-uploaded receipt logo (from Receipt Settings). Null -> fall back to /logo.svg. */
+  /** Admin-uploaded brand logo (Admin > Appearance). Null -> fall back to /logo.svg. */
   logoUrl: string | null;
 };
 

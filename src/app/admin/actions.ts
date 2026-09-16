@@ -10,6 +10,7 @@ import { logAudit } from "@/lib/audit";
 import { fail, ok, slugify, type ActionResult } from "@/lib/action-result";
 import { ORDER_STATUSES, ROLES, STORAGE_BUCKETS } from "@/lib/constants";
 import { resolveImageUrl } from "@/lib/images";
+import { normalizeHex } from "@/lib/color";
 
 function revalidateAdmin() {
   revalidatePath("/admin", "layout");
@@ -520,4 +521,75 @@ export async function saveStoreSettings(
     },
   });
   return ok("Payment settings saved.");
+}
+
+/* ============================ APPEARANCE ============================ */
+/**
+ * Site-wide branding: store name, brand color, brand logo. Applied
+ * everywhere via CSS variables the root layout injects from this row (see
+ * `@/lib/color`) — the same logo also feeds the printed/WhatsApp nota
+ * (`@/lib/receipt-shared`), gated there by the separate `show_logo_on_receipt`
+ * toggle on the Receipt Settings page.
+ */
+export async function saveAppearanceSettings(
+  _prev: ActionResult | null,
+  formData: FormData,
+): Promise<ActionResult> {
+  const { userId, profile: actor } = await assertRole("ADMIN");
+  const admin = createAdminClient();
+
+  const storeName = String(formData.get("store_name") ?? "").trim();
+  if (!storeName) return fail("Store name can't be empty.");
+
+  const rawColor = String(formData.get("theme_primary_color") ?? "").trim();
+  const primaryColor = normalizeHex(rawColor);
+  if (!primaryColor) return fail("Brand color must be a valid hex code, e.g. #a8547f.");
+
+  const patch: Record<string, string | null> = {
+    store_name: storeName,
+    theme_primary_color: primaryColor,
+  };
+
+  const file = formData.get("brand_logo") as File | null;
+  if (file && file.size > 0) {
+    if (!file.type.startsWith("image/")) {
+      return fail("Logo file must be an image.");
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      return fail("Logo image must be 5 MB or smaller.");
+    }
+    const ext = file.name.split(".").pop()?.toLowerCase() || "png";
+    const path = `settings/brand-logo-${Date.now()}.${ext}`;
+    const { error: upErr } = await admin.storage
+      .from(STORAGE_BUCKETS.productImages)
+      .upload(path, file, { upsert: true, contentType: file.type });
+    if (upErr) return fail(`Upload failed: ${upErr.message}`);
+    const { data: pub } = admin.storage
+      .from(STORAGE_BUCKETS.productImages)
+      .getPublicUrl(path);
+    patch.brand_logo_url = pub.publicUrl;
+  } else if (formData.get("remove_brand_logo") === "on") {
+    patch.brand_logo_url = null;
+  }
+
+  const { error } = await admin
+    .from("store_settings")
+    .update(patch as never)
+    .eq("id", 1);
+  if (error) return fail(error.message);
+
+  // Everything reads store_settings through the request-scoped `cache()` in
+  // @/lib/data, but that cache doesn't span requests — revalidatePath is what
+  // actually busts Next's page/layout cache so the new branding shows up.
+  revalidatePath("/", "layout");
+  await logAudit({
+    actorId: userId,
+    actorName: actor.full_name,
+    actorRole: actor.role,
+    action: "SETTINGS_UPDATE",
+    entityType: "store_settings",
+    entityId: "1",
+    summary: `${actor.full_name || "Admin"} updated appearance settings (name/color/logo)`,
+  });
+  return ok("Appearance settings saved.");
 }

@@ -10,6 +10,7 @@
     "db:push": "node scripts/db-push.mjs",
     "db:reset": "node scripts/db-push.mjs --seed",
     "db:seed": "node scripts/db-push.mjs --seed",
+    "db:backup-settings": "node scripts/backup-store-settings.mjs",
     "user:create": "node scripts/create-user.mjs"
   },
   "dependencies": {

@@ -1,16 +1,19 @@
 import Link from "next/link";
 
 import { getSession, ROLE_HOME } from "@/lib/auth";
+import { getStoreSettings } from "@/lib/data";
 import { signOut } from "@/app/(auth)/actions";
 import { CartProvider } from "@/components/cart/cart-context";
 import { CartBadge } from "@/components/cart/cart-badge";
+import { BrandMark } from "@/components/brand-mark";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export default async function ShopLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const session = await getSession();
+  const [session, settings] = await Promise.all([getSession(), getStoreSettings()]);
   const role = session?.profile.role;
   const staffHome =
     role && role !== "CUSTOMER" ? ROLE_HOME[role] : null;
@@ -20,9 +23,10 @@ export default async function ShopLayout({
       <div className="flex min-h-screen flex-col">
         <header className="sticky top-0 z-10 border-b border-border bg-background/80 backdrop-blur">
           <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3">
-            <Link href="/shop" className="shrink-0 text-base font-bold sm:text-lg">
-              🧁 Allins Bakery
-            </Link>
+            <BrandMark
+              href="/shop"
+              className="shrink-0 text-base font-bold sm:text-lg"
+            />
             <nav className="-mr-1 flex flex-1 items-center justify-end gap-0.5 overflow-x-auto whitespace-nowrap pl-1 text-sm [&>*]:shrink-0 [&_a]:shrink-0 sm:gap-1">
               <Link
                 href="/shop"
@@ -31,6 +35,7 @@ export default async function ShopLayout({
                 Shop
               </Link>
               <CartBadge />
+              <ThemeToggle className="rounded-lg px-2 py-2 text-xs font-medium hover:bg-foreground/10" />
               {session ? (
                 <>
                   <Link
@@ -76,7 +81,7 @@ export default async function ShopLayout({
         </main>
 
         <footer className="border-t border-border py-6 text-center text-sm text-foreground/50">
-          © {new Date().getFullYear()} Allins Bakery
+          © {new Date().getFullYear()} {settings.store_name}
         </footer>
       </div>
     </CartProvider>

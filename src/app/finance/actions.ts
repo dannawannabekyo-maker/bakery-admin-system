@@ -8,7 +8,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { logAudit } from "@/lib/audit";
 import { fail, ok, type ActionResult } from "@/lib/action-result";
 import { formatCurrency } from "@/lib/format";
-import { EXPENSE_CATEGORIES, STORAGE_BUCKETS } from "@/lib/constants";
+import { EXPENSE_CATEGORIES } from "@/lib/constants";
 import { getStoreSettings } from "@/lib/data";
 import type { ReceiptSettings } from "@/lib/receipt-shared";
 
@@ -163,11 +163,12 @@ export async function getReceiptToggleSettings(): Promise<ReceiptSettings> {
   await assertRole(["FINANCE", "ADMIN"]);
   const settings = await getStoreSettings();
   return {
+    storeName: settings.store_name,
     showTax: settings.show_tax_on_receipt,
     showLogo: settings.show_logo_on_receipt,
     showPoInstructions: settings.show_po_instructions,
     taxRate: settings.tax_rate,
-    logoUrl: settings.receipt_logo_url,
+    logoUrl: settings.brand_logo_url,
   };
 }
 
@@ -178,33 +179,11 @@ export async function saveReceiptSettings(
   const { userId, profile } = await assertRole(["FINANCE", "ADMIN"]);
   const admin = createAdminClient();
 
-  const patch: Record<string, boolean | string | null> = {
+  const patch: Record<string, boolean> = {
     show_tax_on_receipt: formData.get("show_tax_on_receipt") === "on",
     show_logo_on_receipt: formData.get("show_logo_on_receipt") === "on",
     show_po_instructions: formData.get("show_po_instructions") === "on",
   };
-
-  const file = formData.get("receipt_logo") as File | null;
-  if (file && file.size > 0) {
-    if (!file.type.startsWith("image/")) {
-      return fail("Logo file must be an image.");
-    }
-    if (file.size > 5 * 1024 * 1024) {
-      return fail("Logo image must be 5 MB or smaller.");
-    }
-    const ext = file.name.split(".").pop()?.toLowerCase() || "png";
-    const path = `settings/receipt-logo-${Date.now()}.${ext}`;
-    const { error: upErr } = await admin.storage
-      .from(STORAGE_BUCKETS.productImages)
-      .upload(path, file, { upsert: true, contentType: file.type });
-    if (upErr) return fail(`Upload failed: ${upErr.message}`);
-    const { data: pub } = admin.storage
-      .from(STORAGE_BUCKETS.productImages)
-      .getPublicUrl(path);
-    patch.receipt_logo_url = pub.publicUrl;
-  } else if (formData.get("remove_receipt_logo") === "on") {
-    patch.receipt_logo_url = null;
-  }
 
   const { error } = await admin
     .from("store_settings")

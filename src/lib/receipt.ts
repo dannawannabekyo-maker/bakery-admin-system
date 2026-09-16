@@ -38,11 +38,12 @@ export async function getReceiptData(
   if (!order) return null;
 
   const settings: ReceiptSettings = {
+    storeName: storeSettings.store_name,
     showTax: storeSettings.show_tax_on_receipt,
     showLogo: storeSettings.show_logo_on_receipt,
     showPoInstructions: storeSettings.show_po_instructions,
     taxRate: storeSettings.tax_rate,
-    logoUrl: storeSettings.receipt_logo_url,
+    logoUrl: storeSettings.brand_logo_url,
   };
 
   const tax = taxBreakdown(order.total_amount, settings.taxRate);

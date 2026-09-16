@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -15,6 +16,8 @@ import {
   STORAGE_BUCKETS,
   DEFAULT_TAX_RATE,
   DEFAULT_DAILY_PO_ITEM_CAPACITY,
+  DEFAULT_STORE_NAME,
+  DEFAULT_PRIMARY_COLOR,
 } from "@/lib/constants";
 
 export type ProductWithCategory = ProductRow & {
@@ -130,6 +133,9 @@ export async function listOrders(opts?: {
   statuses?: string[];
   customerId?: string;
   limit?: number;
+  /** created_at range, ISO instants — inclusive start, exclusive end. */
+  from?: string;
+  to?: string;
 }) {
   const supabase = opts?.admin ? createAdminClient() : await createClient();
   let q = supabase
@@ -141,6 +147,8 @@ export async function listOrders(opts?: {
   if (opts?.statuses?.length)
     q = q.in("status", opts.statuses as OrderStatusEnum[]);
   if (opts?.customerId) q = q.eq("customer_id", opts.customerId);
+  if (opts?.from) q = q.gte("created_at", opts.from);
+  if (opts?.to) q = q.lt("created_at", opts.to);
 
   const { data } = await q;
   return (data ?? []) as OrderWithRelations[];
@@ -169,8 +177,13 @@ export async function listAllProfiles() {
 
 /* --------------------------------------------------------- settings & payment */
 
-/** The single store_settings row (QRIS + bank details). Readable by everyone. */
-export async function getStoreSettings(): Promise<StoreSettingsRow> {
+/**
+ * The single store_settings row (QRIS + bank details + branding). Readable
+ * by everyone. `cache()`-wrapped because the root layout, every dashboard
+ * shell, and the shop/auth headers all read it once per request to render
+ * the site name/logo/theme color — this dedupes those into one DB round trip.
+ */
+export const getStoreSettings = cache(async (): Promise<StoreSettingsRow> => {
   const supabase = await createClient();
   const { data } = await supabase
     .from("store_settings")
@@ -191,11 +204,13 @@ export async function getStoreSettings(): Promise<StoreSettingsRow> {
       show_tax_on_receipt: true,
       show_logo_on_receipt: true,
       show_po_instructions: true,
-      receipt_logo_url: null,
+      brand_logo_url: null,
+      store_name: DEFAULT_STORE_NAME,
+      theme_primary_color: DEFAULT_PRIMARY_COLOR,
       updated_at: new Date(0).toISOString(),
     }
   );
-}
+});
 
 /**
  * Signed URL for a payment-receipt object. Returns null for legacy reference

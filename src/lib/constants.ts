@@ -82,6 +82,12 @@ export const PAYMENT_METHOD_LABEL: Record<PaymentMethod, string> = {
 export const DEFAULT_TAX_RATE = 0.11; // inclusive: menu prices already include this
 export const DEFAULT_DAILY_PO_ITEM_CAPACITY = 200;
 
+/* ---------------------------------------------------------------- appearance */
+
+/** Fallbacks only — the live values are `store_settings.store_name` / `.theme_primary_color`. */
+export const DEFAULT_STORE_NAME = "Allins Bakery";
+export const DEFAULT_PRIMARY_COLOR = "#a8547f"; // dusty rose, matches globals.css
+
 /** Suggested (non-enforced) expense buckets for the cash-flow form. */
 export const EXPENSE_CATEGORIES = [
   "OPERATIONAL",

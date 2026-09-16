@@ -5,6 +5,7 @@ import { RealtimeOrdersRefresh } from "@/components/realtime-orders-refresh";
 const NAV = [
   { href: "/sales", label: "Incoming Orders" },
   { href: "/sales/orders/new", label: "New Manual Order" },
+  { href: "/sales/recap", label: "Recap" },
 ];
 
 export default async function SalesLayout({

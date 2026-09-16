@@ -88,7 +88,7 @@ export function buildReceiptWhatsAppText(
   const tax = taxBreakdown(order.total_amount, settings.taxRate);
   const lines: string[] = [];
 
-  lines.push("🧁 *Allins Bakery* — Nota Pembelian");
+  lines.push(`🧁 *${settings.storeName}* — Nota Pembelian`);
   lines.push(`No. Order: ${order.order_number}`);
   lines.push(`Tanggal: ${formatDateTime(order.created_at)}`);
   lines.push("");
@@ -115,7 +115,7 @@ export function buildReceiptWhatsAppText(
   }
 
   lines.push("");
-  lines.push("Terima kasih telah berbelanja di Allins Bakery 🧁");
+  lines.push(`Terima kasih telah berbelanja di ${settings.storeName} 🧁`);
 
   return lines.join("\n");
 }
@@ -149,7 +149,7 @@ export async function buildReceiptPdf(
 
   doc.setFont("helvetica", "bold");
   doc.setFontSize(13);
-  doc.text("Allins Bakery", width / 2, y, { align: "center" });
+  doc.text(settings.storeName, width / 2, y, { align: "center" });
   y += 5;
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
@@ -214,7 +214,7 @@ export async function buildReceiptPdf(
 
   divider();
   doc.setFontSize(8);
-  doc.text("Terima kasih telah berbelanja di Allins Bakery", width / 2, y, {
+  doc.text(`Terima kasih telah berbelanja di ${settings.storeName}`, width / 2, y, {
     align: "center",
     maxWidth: contentWidth,
   });

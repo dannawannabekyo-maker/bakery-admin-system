@@ -46,11 +46,11 @@ export default async function ReceiptPage({
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={settings.logoUrl || "/logo.svg"}
-              alt="Allins Bakery"
+              alt={settings.storeName}
               className="mx-auto mb-2 h-14 w-14 object-contain"
             />
           )}
-          <p className="text-lg font-bold">🧁 Allins Bakery</p>
+          <p className="text-lg font-bold">🧁 {settings.storeName}</p>
           <p className="text-foreground/60">Nota Pembelian</p>
         </div>
 
@@ -129,7 +129,7 @@ export default async function ReceiptPage({
         <Divider />
 
         <p className="text-center text-xs text-foreground/60">
-          Terima kasih telah berbelanja di Allins Bakery 🧁
+          Terima kasih telah berbelanja di {settings.storeName} 🧁
           <br />
           Simpan nota ini sebagai bukti pesanan.
         </p>

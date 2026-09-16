@@ -2,14 +2,27 @@
 
 /* ---------------------------------------------------------------------------
    Allins Bakery — pastel design tokens
+
+   --primary/--primary-foreground are admin-configurable (Admin > Appearance,
+   one hex color) — the root layout injects --brand-* overrides inline per
+   request, derived server-side by @/lib/color from that single hex. The
+   values below are just the out-of-the-box fallback (== the DB default), so
+   the page never flashes unstyled before that inline <style> is parsed.
+
+   Theme (light/dark) is attribute-driven, not just prefers-color-scheme: a
+   blocking inline script in the root layout sets data-theme on <html> from
+   localStorage (falling back to the OS preference) before first paint, so
+   `dark:` utilities and the toggle button both key off the same attribute.
    --------------------------------------------------------------------------- */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
 :root {
   --background: #fff7fb;         /* rose-tinted cream */
   --foreground: #4a3b47;         /* soft dark plum */
   --muted: #fbeef4;             /* pale pink */
   --border: #f1dbe7;            /* light rose */
-  --primary: #a8547f;          /* dusty rose (AA on near-white text) */
-  --primary-foreground: #fff7fb;
+  --primary: var(--brand-primary, #a8547f);          /* dusty rose (AA on near-white text) */
+  --primary-foreground: var(--brand-primary-foreground, #fff7fb);
   --accent: #8f7bc4;           /* soft lavender */
 }
 
@@ -25,14 +38,26 @@
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 }
 
+[data-theme="dark"] {
+  --background: #221a20;
+  --foreground: #f4e8ef;
+  --muted: #2e222b;
+  --border: #3f2f3a;
+  --primary: var(--brand-primary-dark, #e6a8c8);     /* light rose */
+  --primary-foreground: var(--brand-primary-foreground-dark, #221a20);
+  --accent: #c9b6e4;
+}
+
+/* No-JS / pre-hydration fallback only — the blocking script in the root
+   layout normally sets [data-theme] before first paint, so this rarely runs. */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     --background: #221a20;
     --foreground: #f4e8ef;
     --muted: #2e222b;
     --border: #3f2f3a;
-    --primary: #e6a8c8;         /* light rose */
-    --primary-foreground: #221a20;
+    --primary: var(--brand-primary-dark, #e6a8c8);
+    --primary-foreground: var(--brand-primary-foreground-dark, #221a20);
     --accent: #c9b6e4;
   }
 }

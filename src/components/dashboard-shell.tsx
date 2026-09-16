@@ -1,6 +1,8 @@
 import Link from "next/link";
 
 import { signOut } from "@/app/(auth)/actions";
+import { BrandMark } from "@/components/brand-mark";
+import { ThemeToggle } from "@/components/theme-toggle";
 import type { Role } from "@/lib/constants";
 
 export type NavItem = { href: string; label: string };
@@ -22,21 +24,22 @@ export function DashboardShell({
     <div className="min-h-screen md:grid md:grid-cols-[240px_1fr]">
       <aside className="border-b border-border bg-muted/40 p-4 md:border-b-0 md:border-r">
         <div className="mb-4 flex items-center justify-between gap-3 md:mb-6 md:block">
-          <Link href="/" className="text-lg font-bold">
-            🧁 Allins Bakery
-          </Link>
+          <BrandMark href="/" className="text-lg font-bold" />
           <p className="mt-1 hidden text-xs uppercase tracking-widest text-primary md:block">
             {title}
           </p>
-          {/* Mobile-only account + sign out */}
-          <form action={signOut} className="flex items-center gap-2 md:hidden">
-            <span className="max-w-[8rem] truncate text-xs text-foreground/60">
-              {userName}
-            </span>
-            <button className="rounded-md border border-border px-2 py-1 text-xs font-medium text-red-600">
-              Sign out
-            </button>
-          </form>
+          {/* Mobile-only theme toggle + account + sign out */}
+          <div className="flex items-center gap-2 md:hidden">
+            <ThemeToggle />
+            <form action={signOut} className="flex items-center gap-2">
+              <span className="max-w-[8rem] truncate text-xs text-foreground/60">
+                {userName}
+              </span>
+              <button className="rounded-md border border-border px-2 py-1 text-xs font-medium text-red-600">
+                Sign out
+              </button>
+            </form>
+          </div>
         </div>
         <nav className="-mx-1 flex gap-1 overflow-x-auto whitespace-nowrap px-1 pb-1 md:mx-0 md:flex-col md:overflow-visible md:whitespace-normal md:px-0 md:pb-0">
           {nav.map((n) => (
@@ -52,11 +55,14 @@ export function DashboardShell({
         <div className="mt-6 hidden border-t border-border pt-4 text-sm md:block">
           <p className="font-medium">{userName}</p>
           <p className="text-xs text-foreground/60">{role}</p>
-          <form action={signOut} className="mt-2">
-            <button className="text-xs font-medium text-red-600 hover:underline">
-              Sign out
-            </button>
-          </form>
+          <div className="mt-2 flex items-center gap-3">
+            <form action={signOut}>
+              <button className="text-xs font-medium text-red-600 hover:underline">
+                Sign out
+              </button>
+            </form>
+            <ThemeToggle className="ml-auto rounded-md border border-border px-2 py-1 text-xs font-medium hover:bg-foreground/10" />
+          </div>
         </div>
       </aside>
 

@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { listNightDates, getNightBoard } from "@/lib/kitchen";
 import { getDailyCapacity } from "@/lib/capacity";
+import { getStoreSettings } from "@/lib/data";
 import { jakartaDateString } from "@/lib/format";
 import { Card, Badge, StatusBadge, EmptyState } from "@/components/ui";
 import { PageHeader } from "@/components/dashboard-shell";
@@ -21,9 +22,10 @@ export default async function NightProductionPage({
   const today = jakartaDateString();
   const { date: rawDate } = await searchParams;
 
-  const [dates, capacity] = await Promise.all([
+  const [dates, capacity, settings] = await Promise.all([
     listNightDates(today, DATE_WINDOW_DAYS),
     getDailyCapacity(),
+    getStoreSettings(),
   ]);
 
   const selectedDate =
@@ -157,7 +159,7 @@ export default async function NightProductionPage({
               key={`${p.productId}-${l.orderId}`}
               className="break-inside-avoid rounded border border-dashed border-foreground/40 p-3 text-sm"
             >
-              <p className="font-bold">🧁 Allins Bakery</p>
+              <p className="font-bold">🧁 {settings.store_name}</p>
               <p className="mt-1 text-base font-semibold">{p.productName}</p>
               <p className="text-lg font-bold">{l.qty} pcs</p>
               <p className="mt-1 text-foreground/70">{l.orderNumber}</p>
