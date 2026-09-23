@@ -220,6 +220,9 @@ export const getStoreSettings = cache(async (): Promise<StoreSettingsRow> => {
       theme_primary_color: DEFAULT_PRIMARY_COLOR,
       sales_whatsapp_number: null,
       sales_whatsapp_label: null,
+      store_closed: false,
+      store_closed_message: null,
+      store_closed_until: null,
       updated_at: new Date(0).toISOString(),
     }
   );

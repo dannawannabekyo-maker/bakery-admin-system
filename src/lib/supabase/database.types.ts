@@ -177,6 +177,9 @@ export interface Database {
           theme_primary_color: string;
           sales_whatsapp_number: string | null;
           sales_whatsapp_label: string | null;
+          store_closed: boolean;
+          store_closed_message: string | null;
+          store_closed_until: string | null;
           updated_at: string;
         };
         Insert: {
@@ -197,6 +200,9 @@ export interface Database {
           theme_primary_color?: string;
           sales_whatsapp_number?: string | null;
           sales_whatsapp_label?: string | null;
+          store_closed?: boolean;
+          store_closed_message?: string | null;
+          store_closed_until?: string | null;
           updated_at?: string;
         };
         Update: Partial<

@@ -6,6 +6,8 @@ import { assertRole, getSession } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createOrder } from "@/lib/orders-server";
+import { getStoreSettings } from "@/lib/data";
+import { storeClosedMessage } from "@/lib/store-status";
 import { logAudit } from "@/lib/audit";
 import { fail, ok, type ActionResult } from "@/lib/action-result";
 import { PAYMENT_METHODS, STORAGE_BUCKETS } from "@/lib/constants";
@@ -16,6 +18,9 @@ export async function createCustomerOrder(
   formData: FormData,
 ): Promise<ActionResult> {
   const { userId, profile } = await assertRole(["CUSTOMER", "ADMIN"]);
+
+  const closedMessage = storeClosedMessage(await getStoreSettings());
+  if (closedMessage) return fail(closedMessage);
 
   let items: { productId: string; quantity: number }[] = [];
   try {
@@ -58,6 +63,9 @@ export async function createGuestOrder(
   _prev: ActionResult | null,
   formData: FormData,
 ): Promise<ActionResult> {
+  const closedMessage = storeClosedMessage(await getStoreSettings());
+  if (closedMessage) return fail(closedMessage);
+
   const name = String(formData.get("guest_name") ?? "").trim();
   if (!name) return fail("Nama wajib diisi.");
   if (name.length > 80) return fail("Nama terlalu panjang.");

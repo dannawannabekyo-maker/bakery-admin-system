@@ -8,6 +8,8 @@ import { CartBadge } from "@/components/cart/cart-badge";
 import { BrandMark } from "@/components/brand-mark";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { SalesWhatsappButton } from "@/components/sales-whatsapp-button";
+import { StoreClosedBanner } from "@/components/store-closed-banner";
+import { storeClosedMessage } from "@/lib/store-status";
 
 export default async function ShopLayout({
   children,
@@ -76,6 +78,8 @@ export default async function ShopLayout({
             </nav>
           </div>
         </header>
+
+        <StoreClosedBanner message={storeClosedMessage(settings)} />
 
         <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8">
           {children}

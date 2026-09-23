@@ -3,7 +3,7 @@
 import { useActionState, useMemo, useState } from "react";
 
 import { saveAppearanceSettings } from "../actions";
-import { Card, Field, Input } from "@/components/ui";
+import { Card, Field, Input, Textarea } from "@/components/ui";
 import { SubmitButton, Feedback } from "@/components/form";
 import { deriveTheme, normalizeHex, contrastRatio } from "@/lib/color";
 import type { StoreSettingsRow } from "@/lib/supabase/database.types";
@@ -11,6 +11,7 @@ import type { StoreSettingsRow } from "@/lib/supabase/database.types";
 export function AppearanceForm({ settings }: { settings: StoreSettingsRow }) {
   const [state, action] = useActionState(saveAppearanceSettings, null);
   const [colorInput, setColorInput] = useState(settings.theme_primary_color);
+  const [storeClosed, setStoreClosed] = useState(settings.store_closed);
 
   const theme = useMemo(() => {
     const hex = normalizeHex(colorInput);
@@ -20,6 +21,52 @@ export function AppearanceForm({ settings }: { settings: StoreSettingsRow }) {
   return (
     <form action={action} className="space-y-4">
       <Feedback state={state} />
+
+      <Card className="space-y-3">
+        <h2 className="font-semibold">Store status</h2>
+        <p className="text-sm text-foreground/60">
+          Closing the store blocks new orders from the shop and guest checkout
+          (customers see a clear message instead of the order form). Sales and
+          Admin can still log an order manually — this only closes the
+          customer-facing storefront.
+        </p>
+        <label className="flex items-center gap-2 text-sm font-medium">
+          <input
+            type="checkbox"
+            name="store_closed"
+            checked={storeClosed}
+            onChange={(e) => setStoreClosed(e.target.checked)}
+          />
+          Toko sedang tutup — jangan terima pesanan baru
+        </label>
+        {storeClosed && (
+          <div className="space-y-3 border-l-2 border-border pl-3">
+            <Field
+              label="Pesan untuk pelanggan (opsional)"
+              hint="Tampil di halaman toko dan checkout. Kosongkan untuk memakai pesan default."
+            >
+              <Textarea
+                name="store_closed_message"
+                defaultValue={settings.store_closed_message ?? ""}
+                placeholder="Toko sedang tutup sementara dan belum menerima pesanan baru."
+                rows={2}
+                maxLength={300}
+              />
+            </Field>
+            <Field
+              label="Buka kembali pada (opsional)"
+              hint="Ditampilkan ke pelanggan sebagai info kapan toko buka lagi."
+            >
+              <Input
+                type="date"
+                name="store_closed_until"
+                defaultValue={settings.store_closed_until ?? ""}
+                className="max-w-48"
+              />
+            </Field>
+          </div>
+        )}
+      </Card>
 
       <Card className="space-y-3">
         <h2 className="font-semibold">Store name</h2>

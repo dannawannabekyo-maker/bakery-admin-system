@@ -553,11 +553,18 @@ export async function saveAppearanceSettings(
   }
   const whatsappLabel = String(formData.get("sales_whatsapp_label") ?? "").trim() || null;
 
-  const patch: Record<string, string | null> = {
+  const storeClosed = formData.get("store_closed") === "on";
+  const closedMessage = String(formData.get("store_closed_message") ?? "").trim() || null;
+  const closedUntil = String(formData.get("store_closed_until") ?? "").trim() || null;
+
+  const patch: Record<string, string | boolean | null> = {
     store_name: storeName,
     theme_primary_color: primaryColor,
     sales_whatsapp_number: whatsappNumber,
     sales_whatsapp_label: whatsappNumber ? whatsappLabel : null,
+    store_closed: storeClosed,
+    store_closed_message: storeClosed ? closedMessage : null,
+    store_closed_until: storeClosed ? closedUntil : null,
   };
 
   const file = formData.get("brand_logo") as File | null;
@@ -599,7 +606,9 @@ export async function saveAppearanceSettings(
     action: "SETTINGS_UPDATE",
     entityType: "store_settings",
     entityId: "1",
-    summary: `${actor.full_name || "Admin"} updated appearance settings (name/color/logo)`,
+    summary: storeClosed
+      ? `${actor.full_name || "Admin"} closed the store to new orders`
+      : `${actor.full_name || "Admin"} updated appearance settings (name/color/logo)`,
   });
   return ok("Appearance settings saved.");
 }
