@@ -12,7 +12,12 @@ import { formatCurrency, formatDateTime, taxBreakdown } from "@/lib/format";
 import { PAYMENT_METHOD_LABEL, type PaymentMethod } from "@/lib/constants";
 import type { OrderWithRelations } from "@/lib/data";
 import { orderContactName, orderContactPhone } from "@/lib/order-contact";
-import { poInstructionLines, type ReceiptSettings } from "@/lib/receipt-shared";
+import {
+  addonContentsText,
+  poInstructionLines,
+  visibleAddons,
+  type ReceiptSettings,
+} from "@/lib/receipt-shared";
 
 export type { ReceiptSettings };
 
@@ -97,6 +102,11 @@ export function buildReceiptWhatsAppText(
   for (const it of order.items) {
     lines.push(`- ${it.product?.name ?? "Produk"} x${it.quantity} — ${formatCurrency(it.subtotal)}`);
   }
+  for (const a of visibleAddons(order)) {
+    lines.push(`- ${a.name} x${a.quantity} — ${formatCurrency(a.subtotal)}`);
+    const contents = addonContentsText(a);
+    if (contents) lines.push(`  ${contents}`);
+  }
   lines.push("");
 
   if (settings.showTax) {
@@ -130,7 +140,7 @@ export async function buildReceiptPdf(
 
   const width = 80;
   const lineH = 5;
-  const estimatedLines = 24 + order.items.length + poLines.length + (settings.showLogo ? 10 : 0);
+  const estimatedLines = 24 + order.items.length + visibleAddons(order).length * 3 + poLines.length + (settings.showLogo ? 10 : 0);
   const height = Math.max(140, estimatedLines * lineH);
 
   const doc = new jsPDF({ unit: "mm", format: [width, height] });
@@ -187,6 +197,19 @@ export async function buildReceiptPdf(
     doc.text(`${name} x${it.quantity}`, marginX, y, { maxWidth: contentWidth - 22 });
     doc.text(formatCurrency(it.subtotal), width - marginX, y, { align: "right" });
     y += lineH;
+  }
+  for (const a of visibleAddons(order)) {
+    doc.text(`${a.name} x${a.quantity}`, marginX, y, { maxWidth: contentWidth - 22 });
+    doc.text(formatCurrency(a.subtotal), width - marginX, y, { align: "right" });
+    y += lineH;
+    const contents = addonContentsText(a);
+    if (contents) {
+      const wrapped = doc.splitTextToSize(contents, contentWidth - 4);
+      doc.setFontSize(8);
+      doc.text(wrapped, marginX + 2, y);
+      y += lineH * wrapped.length;
+      doc.setFontSize(9);
+    }
   }
 
   divider();

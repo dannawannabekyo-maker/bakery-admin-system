@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { getReceiptData } from "@/lib/receipt";
 import { orderContactName, orderContactPhone } from "@/lib/order-contact";
 import { formatCurrency, formatDateTime } from "@/lib/format";
+import { addonContentsText, visibleAddons } from "@/lib/receipt-shared";
 import { PrintButton } from "./print-button";
 
 export const metadata = { title: "Nota" };
@@ -87,6 +88,27 @@ export default async function ReceiptPage({
                 </td>
                 <td className="py-0.5 text-center">{it.quantity}</td>
                 <td className="py-0.5 text-right">{formatCurrency(it.subtotal)}</td>
+              </tr>
+            ))}
+            {visibleAddons(order).map((a) => (
+              <tr key={a.id}>
+                <td className="py-0.5 pr-2">
+                  {a.name}
+                  {addonContentsText(a) && (
+                    <span className="block text-xs text-foreground/50">
+                      {addonContentsText(a)}
+                    </span>
+                  )}
+                  {a.description && (
+                    <span className="block text-xs text-foreground/50">
+                      {a.description}
+                    </span>
+                  )}
+                </td>
+                <td className="py-0.5 text-center align-top">{a.quantity}</td>
+                <td className="py-0.5 text-right align-top">
+                  {formatCurrency(a.subtotal)}
+                </td>
               </tr>
             ))}
           </tbody>

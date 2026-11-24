@@ -41,3 +41,6 @@ yarn-error.log*
 
 # local DB backups (contains live data — never commit)
 /scripts/*-backup-*.json
+
+# Claude Code local settings
+.claude/settings.local.json

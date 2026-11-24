@@ -19,6 +19,20 @@ export type ReceiptSettings = {
 };
 
 /**
+ * Add-ons (paket / bingkisan) the staff chose to show on the nota. Hidden
+ * ones still count in the order total — they are only left off the printout.
+ */
+export function visibleAddons(order: OrderWithRelations) {
+  return (order.addons ?? []).filter((a) => a.show_on_receipt);
+}
+
+/** "Isi: 2x Brownies, 1x Cookies" — null when the add-on has no listed contents. */
+export function addonContentsText(addon: OrderWithRelations["addons"][number]): string | null {
+  const parts = (addon.contents ?? []).map((c) => `${c.quantity}x ${c.name}`);
+  return parts.length ? `Isi: ${parts.join(", ")}` : null;
+}
+
+/**
  * PO waiting-time instructions, shared verbatim between the PDF, the
  * WhatsApp text, and the on-screen nota. Empty for READY_STOCK orders (no
  * pickup/delivery date).

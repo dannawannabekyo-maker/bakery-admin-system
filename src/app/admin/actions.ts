@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { assertRole } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createOrder } from "@/lib/orders-server";
+import { parseAddonsPayload } from "@/lib/addons";
 import { logAudit } from "@/lib/audit";
 import { fail, ok, slugify, type ActionResult } from "@/lib/action-result";
 import { ORDER_STATUSES, ROLES, STORAGE_BUCKETS } from "@/lib/constants";
@@ -237,6 +238,82 @@ export async function adminUpdateOrderMeta(
   return ok("Order updated.");
 }
 
+/**
+ * Edit the nota of an order that is already paid (or any non-cancelled order):
+ * item qty / price / removal and the add-on list. Applied atomically by the
+ * `admin_edit_order_lines` DB function, which also moves READY_STOCK stock for
+ * the quantity change and recalculates the total.
+ */
+export async function adminEditOrderNota(
+  _prev: ActionResult | null,
+  formData: FormData,
+): Promise<ActionResult> {
+  const { userId, profile } = await assertRole("ADMIN");
+  const admin = createAdminClient();
+  const id = String(formData.get("id"));
+  const reason = String(formData.get("reason") ?? "").trim();
+  if (!reason) return fail("Isi alasan perubahan nota (tercatat di log aktivitas).");
+
+  let rawItems: unknown;
+  try {
+    rawItems = JSON.parse(String(formData.get("items") ?? "[]"));
+  } catch {
+    return fail("Data item tidak valid.");
+  }
+  const items = (Array.isArray(rawItems) ? rawItems : [])
+    .map((r) => {
+      const x = (r ?? {}) as Record<string, unknown>;
+      return {
+        id: String(x.id ?? ""),
+        quantity: Math.max(0, Math.floor(Number(x.quantity) || 0)),
+        price: Math.max(0, Math.floor(Number(x.price) || 0)),
+      };
+    })
+    .filter((x) => x.id);
+  const addons = parseAddonsPayload(formData.get("addons")).map((a) => ({
+    kind: a.kind,
+    name: a.name,
+    description: a.description ?? "",
+    contents: a.contents,
+    quantity: a.quantity,
+    unit_price: a.unitPrice,
+    show_on_receipt: a.showOnReceipt,
+  }));
+
+  // Snapshot for the audit trail (before the change).
+  const { data: before } = await admin
+    .from("orders")
+    .select(
+      "order_number,status,total_amount,items:order_items(id,quantity,price_at_time,product:products(name)),addons:order_addons(kind,name,quantity,unit_price,show_on_receipt)",
+    )
+    .eq("id", id)
+    .maybeSingle();
+  if (!before) return fail("Order tidak ditemukan.");
+
+  const { data: newTotal, error } = await admin.rpc("admin_edit_order_lines", {
+    p_order_id: id,
+    p_items: items,
+    p_addons: addons,
+  });
+  if (error) return fail(error.message);
+
+  revalidateAdmin();
+  revalidatePath(`/admin/orders/${id}`);
+  revalidatePath(`/receipt/${id}`);
+  revalidatePath("/shop");
+  await logAudit({
+    actorId: userId,
+    actorName: profile.full_name,
+    actorRole: profile.role,
+    action: "ORDER_NOTA_EDIT",
+    entityType: "order",
+    entityId: id,
+    summary: `${profile.full_name || "Admin"} edited the nota of order ${before.order_number} (${before.status}): total ${before.total_amount} → ${newTotal}. Reason: ${reason}`,
+    metadata: { reason, before, requested: { items, addons }, newTotal },
+  });
+  return ok(`Nota diperbarui. Total baru: ${newTotal}.`);
+}
+
 export async function adminDeleteOrder(formData: FormData): Promise<void> {
   const { userId, profile } = await assertRole("ADMIN");
   const admin = createAdminClient();
@@ -281,6 +358,7 @@ export async function adminCreateManualOrder(
     customerId,
     createdBy: userId,
     items,
+    addons: parseAddonsPayload(formData.get("addons")),
     pickupDate: pickupRaw ? new Date(pickupRaw).toISOString() : null,
     adminNotes: String(formData.get("admin_notes") ?? "").trim() || null,
     privileged: true,

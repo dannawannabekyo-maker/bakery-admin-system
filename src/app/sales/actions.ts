@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { assertRole } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { createOrder } from "@/lib/orders-server";
+import { parseAddonsPayload } from "@/lib/addons";
 import { logAudit } from "@/lib/audit";
 import { fail, ok, type ActionResult } from "@/lib/action-result";
 
@@ -33,6 +34,7 @@ export async function salesCreateManualOrder(
     customerId,
     createdBy: userId,
     items,
+    addons: parseAddonsPayload(formData.get("addons")),
     pickupDate: pickupRaw ? new Date(pickupRaw).toISOString() : null,
     adminNotes: String(formData.get("admin_notes") ?? "").trim() || null,
     privileged: false, // RLS lets SALES insert their own orders

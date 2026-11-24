@@ -7,6 +7,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { checkCapacity } from "@/lib/capacity";
 import type { Database } from "@/lib/supabase/database.types";
 import type { OrderType } from "@/lib/constants";
+import { cleanAddons, type NewOrderAddon } from "@/lib/addons";
 
 export type NewOrderItem = { productId: string; quantity: number };
 
@@ -18,6 +19,8 @@ export type CreateOrderInput = {
   guestName?: string;
   guestPhone?: string;
   items: NewOrderItem[];
+  /** Custom paket / bingkisan lines — billing only, no stock or capacity effect. */
+  addons?: NewOrderAddon[];
   pickupDate?: string | null;
   adminNotes?: string | null;
   /** Use the service-role client (Admin / Sales server flows, and guest checkout — no session to bind RLS to). */
@@ -52,15 +55,21 @@ export async function createOrder(
     .map((i) => ({ productId: i.productId, quantity: Math.floor(i.quantity) }))
     .filter((i) => i.productId && i.quantity > 0);
 
-  if (cleanItems.length === 0) return { ok: false, error: "Your cart is empty." };
+  const addons = cleanAddons(input.addons ?? []);
 
-  const { data: products, error: pErr } = await supabase
-    .from("products")
-    .select("id,name,price,stock,is_preorder,is_active")
-    .in(
-      "id",
-      cleanItems.map((i) => i.productId),
-    );
+  if (cleanItems.length === 0 && addons.length === 0) {
+    return { ok: false, error: "Your cart is empty." };
+  }
+
+  const { data: products, error: pErr } = cleanItems.length
+    ? await supabase
+        .from("products")
+        .select("id,name,price,stock,is_preorder,is_active")
+        .in(
+          "id",
+          cleanItems.map((i) => i.productId),
+        )
+    : { data: [], error: null };
 
   if (pErr) return { ok: false, error: pErr.message };
   if (!products || products.length !== cleanItems.length) {
@@ -102,6 +111,18 @@ export async function createOrder(
     });
   }
 
+  const addonRows = addons.map((a) => ({
+    kind: a.kind,
+    name: a.name,
+    description: a.description ?? null,
+    contents: a.contents,
+    quantity: a.quantity,
+    unit_price: a.unitPrice,
+    subtotal: a.unitPrice * a.quantity,
+    show_on_receipt: a.showOnReceipt,
+  }));
+  total += addonRows.reduce((sum, r) => sum + r.subtotal, 0);
+
   const orderType: OrderType = hasPreorder ? "PRE_ORDER" : "READY_STOCK";
 
   if (orderType === "PRE_ORDER") {
@@ -140,14 +161,25 @@ export async function createOrder(
     return { ok: false, error: oErr?.message ?? "Could not create the order." };
   }
 
-  const { error: iErr } = await supabase.from("order_items").insert(
-    itemRows.map((r) => ({ ...r, order_id: order.id })),
-  );
+  if (itemRows.length > 0) {
+    const { error: iErr } = await supabase.from("order_items").insert(
+      itemRows.map((r) => ({ ...r, order_id: order.id })),
+    );
+    if (iErr) {
+      // best-effort rollback of the header
+      await supabase.from("orders").delete().eq("id", order.id);
+      return { ok: false, error: iErr.message };
+    }
+  }
 
-  if (iErr) {
-    // best-effort rollback of the header
-    await supabase.from("orders").delete().eq("id", order.id);
-    return { ok: false, error: iErr.message };
+  if (addonRows.length > 0) {
+    const { error: aErr } = await supabase.from("order_addons").insert(
+      addonRows.map((r) => ({ ...r, order_id: order.id })),
+    );
+    if (aErr) {
+      await supabase.from("orders").delete().eq("id", order.id);
+      return { ok: false, error: aErr.message };
+    }
   }
 
   await supabase.rpc("recalc_order_total", { p_order_id: order.id });

@@ -336,6 +336,43 @@ export interface Database {
           },
         ];
       };
+      order_addons: {
+        Row: {
+          id: string;
+          order_id: string;
+          kind: "PAKET" | "BINGKISAN" | "LAINNYA";
+          name: string;
+          description: string | null;
+          contents: { name: string; quantity: number }[];
+          quantity: number;
+          unit_price: number;
+          subtotal: number;
+          show_on_receipt: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          order_id: string;
+          kind?: "PAKET" | "BINGKISAN" | "LAINNYA";
+          name: string;
+          description?: string | null;
+          contents?: { name: string; quantity: number }[];
+          quantity?: number;
+          unit_price?: number;
+          subtotal?: number;
+          show_on_receipt?: boolean;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["order_addons"]["Insert"]>;
+        Relationships: [
+          {
+            foreignKeyName: "order_addons_order_id_fkey";
+            columns: ["order_id"];
+            referencedRelation: "orders";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: {
       finance_orders: {
@@ -377,6 +414,10 @@ export interface Database {
         Args: { p_order_id: string };
         Returns: number;
       };
+      admin_edit_order_lines: {
+        Args: { p_order_id: string; p_items: Json; p_addons: Json };
+        Returns: number;
+      };
       po_items_committed_on: {
         Args: { target: string };
         Returns: number;
@@ -405,6 +446,7 @@ export type CategoryRow = Database["public"]["Tables"]["categories"]["Row"];
 export type ProductRow = Database["public"]["Tables"]["products"]["Row"];
 export type OrderRow = Database["public"]["Tables"]["orders"]["Row"];
 export type OrderItemRow = Database["public"]["Tables"]["order_items"]["Row"];
+export type OrderAddonRow = Database["public"]["Tables"]["order_addons"]["Row"];
 export type StoreSettingsRow =
   Database["public"]["Tables"]["store_settings"]["Row"];
 export type CapitalEntryRow =

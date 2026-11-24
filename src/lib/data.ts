@@ -6,6 +6,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import type {
   CategoryRow,
   OrderItemRow,
+  OrderAddonRow,
   OrderRow,
   OrderStatusEnum,
   ProductRow,
@@ -30,6 +31,8 @@ export type OrderWithRelations = OrderRow & {
   items: (OrderItemRow & {
     product: Pick<ProductRow, "id" | "name" | "is_preorder"> | null;
   })[];
+  /** Billing-only custom lines (paket / bingkisan); no stock or capacity effect. */
+  addons: OrderAddonRow[];
 };
 
 /** True for a login-free guest checkout order (no linked customer account). */
@@ -121,7 +124,7 @@ export async function getCategories() {
 /* ------------------------------------------------------------------- orders */
 
 const ORDER_SELECT =
-  "*, customer:profiles!orders_customer_id_fkey(id,full_name,phone_number,address), creator:profiles!orders_created_by_fkey(id,full_name,role), items:order_items(*, product:products(id,name,is_preorder))";
+  "*, customer:profiles!orders_customer_id_fkey(id,full_name,phone_number,address), creator:profiles!orders_created_by_fkey(id,full_name,role), items:order_items(*, product:products(id,name,is_preorder)), addons:order_addons(*)";
 
 export async function getOrder(id: string, opts?: { admin?: boolean }) {
   const supabase = opts?.admin ? createAdminClient() : await createClient();

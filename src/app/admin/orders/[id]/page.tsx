@@ -5,6 +5,8 @@ import { getOrder, getReceiptSignedUrl } from "@/lib/data";
 import { orderContactName, orderContactPhone } from "@/lib/order-contact";
 import { formatCurrency, formatDateTime } from "@/lib/format";
 import { PAYMENT_METHOD_LABEL, type PaymentMethod } from "@/lib/constants";
+import { ADDON_KIND_LABEL } from "@/lib/addons";
+import { addonContentsText } from "@/lib/receipt-shared";
 import { Card, StatusBadge } from "@/components/ui";
 import { ConfirmButton } from "@/components/form";
 import { PageHeader } from "@/components/dashboard-shell";
@@ -12,6 +14,7 @@ import { OrderTimeline } from "@/components/order-timeline";
 import { ReceiptLink } from "@/components/receipt-link";
 import { adminDeleteOrder } from "../../actions";
 import { OrderAdminPanel } from "./order-admin-panel";
+import { EditNotaCard } from "./edit-nota-card";
 
 export const dynamic = "force-dynamic";
 
@@ -76,6 +79,34 @@ export default async function AdminOrderDetail({
                   </td>
                 </tr>
               ))}
+              {(order.addons ?? []).map((a) => (
+                <tr key={a.id} className="border-t border-border align-top">
+                  <td className="py-2">
+                    {a.name}
+                    <span className="ml-1 text-xs text-primary">
+                      {ADDON_KIND_LABEL[a.kind]}
+                    </span>
+                    {!a.show_on_receipt && (
+                      <span className="ml-1 text-xs text-foreground/50">
+                        (tidak di nota)
+                      </span>
+                    )}
+                    {addonContentsText(a) && (
+                      <span className="block text-xs text-foreground/60">
+                        {addonContentsText(a)}
+                      </span>
+                    )}
+                    {a.description && (
+                      <span className="block text-xs text-foreground/60">
+                        {a.description}
+                      </span>
+                    )}
+                  </td>
+                  <td className="py-2">{a.quantity}</td>
+                  <td className="py-2">{formatCurrency(a.unit_price)}</td>
+                  <td className="py-2 text-right">{formatCurrency(a.subtotal)}</td>
+                </tr>
+              ))}
             </tbody>
             <tfoot>
               <tr className="border-t border-border font-semibold">
@@ -133,6 +164,9 @@ export default async function AdminOrderDetail({
       <OrderTimeline status={order.status} />
 
       <OrderAdminPanel order={order} />
+
+      {/* key: remount with fresh line state after each saved edit */}
+      <EditNotaCard key={order.updated_at} order={order} />
 
       <Card className="flex items-center justify-between border-red-200 bg-red-50/40 dark:border-red-500/30 dark:bg-red-500/5">
         <div>
